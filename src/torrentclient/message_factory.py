@@ -1,4 +1,4 @@
-from torrentclient.Message import (
+from torrentclient.message import (
     BitField,
     Choke,
     Handshake,

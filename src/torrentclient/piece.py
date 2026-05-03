@@ -1,5 +1,5 @@
-from torrentclient.Block import Block, BlockStatus, create_blocks
-from torrentclient.Exceptions import PieceIsFull, PieceIsPending
+from torrentclient.block import Block, BlockStatus, create_blocks
+from torrentclient.exceptions import PieceIsFull, PieceIsPending
 
 
 class Piece:

@@ -4,10 +4,10 @@ import logging
 import requests
 
 from torrentclient.bcoder import bdecode
-from torrentclient.Configuration import CONFIGURATION
-from torrentclient.Exceptions import UnexpectedResponse
-from torrentclient.Peer import Peer
-from torrentclient.Tracker import Tracker
+from torrentclient.configuration import CONFIGURATION
+from torrentclient.exceptions import UnexpectedResponse
+from torrentclient.peer import Peer
+from torrentclient.tracker import Tracker
 
 
 class HTTPTracker(Tracker):

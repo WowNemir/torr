@@ -1,7 +1,7 @@
 import random
 import struct
 
-from torrentclient.Configuration import CONFIGURATION
+from torrentclient.configuration import CONFIGURATION
 
 
 class Connection:

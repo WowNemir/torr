@@ -1,5 +1,5 @@
-from torrentclient.Peer import Peer
-from torrentclient.Tracker import Tracker
+from torrentclient.peer import Peer
+from torrentclient.tracker import Tracker
 
 
 class TrackerManager:
