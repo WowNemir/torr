@@ -11,7 +11,6 @@ from torrentclient.Configuration import CONFIGURATION
 from torrentclient.Exceptions import (
     AllPeersChocked,
     NoPeersHavePiece,
-    NoPieceFound,
     NoTrackersFound,
     OutOfPeers,
     PeerDisconnected,
@@ -49,7 +48,7 @@ class TorrentClient:
         torrent: str,
         max_peers: int = CONFIGURATION.max_peers,
         use_progress_bar: bool = True,
-        peers_input: str = None,
+        peers_input: str | None = None,
         output_dir: str = ".",
     ):
         self.peer_manager: PeersManager = PeersManager(max_peers)
@@ -58,7 +57,7 @@ class TorrentClient:
         self.listener_socket: socket.socket = socket.socket()
         self.listener_socket.settimeout(CONFIGURATION.timeout)
         self.port: int = CONFIGURATION.listening_port
-        self.peers_input: str = peers_input
+        self.peers_input: str | None = peers_input
         self.pieces: list[Piece] = []
         self.should_continue = True
         self.use_progress_bar = use_progress_bar
@@ -230,8 +229,6 @@ class TorrentClient:
             if piece.index == index:
                 return piece
 
-        raise NoPieceFound
-
     def handle_piece(self, pieceMessage: PieceMessage):
         try:
             if not len(pieceMessage.data):
@@ -239,6 +236,8 @@ class TorrentClient:
                 return
 
             piece = self._get_piece_by_index(pieceMessage.index)
+            if piece is None:
+                return
             block = piece.get_block_by_offset(pieceMessage.offset)
             block.data = pieceMessage.data
             block.status = BlockStatus.FULL
@@ -256,8 +255,5 @@ class TorrentClient:
 
         except PieceIsPending:
             logging.getLogger("BitTorrent").debug(f"Piece {pieceMessage.index} is pending")
-
-        except NoPieceFound:
-            pass
 
         return False

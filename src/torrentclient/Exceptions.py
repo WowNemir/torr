@@ -34,10 +34,6 @@ class PieceIsFull(BasicException):
     pass
 
 
-class NoPieceFound(BasicException):
-    pass
-
-
 class NoPeersHavePiece(BasicException):
     pass
 
