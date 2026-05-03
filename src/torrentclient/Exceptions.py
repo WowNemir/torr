@@ -44,7 +44,3 @@ class NoTrackersFound(BasicException):
 
 class UnexpectedResponse(BasicException):
     pass
-
-
-class InvalidConfigurationValue(BasicException):
-    pass
