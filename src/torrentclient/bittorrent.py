@@ -10,7 +10,6 @@ from torrentclient.configuration import CONFIGURATION
 from torrentclient.exceptions import (
     AllPeersChocked,
     NoPeersHavePiece,
-    NoTrackersFound,
     PeerDisconnected,
     PieceIsFull,
     PieceIsPending,
@@ -84,7 +83,7 @@ class TorrentClient:
             trackers.remove(None)
 
         if len(trackers) == 0:
-            raise NoTrackersFound
+            raise ValueError("No trackers found")
 
         self.tracker_manager = TrackerManager(trackers)
         file_size, piece_size = self.torrent.length, self.torrent.piece_size

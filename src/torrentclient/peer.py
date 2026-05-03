@@ -9,7 +9,6 @@ from torrentclient.configuration import CONFIGURATION
 from torrentclient.exceptions import (
     PeerConnectionFailed,
     PeerDisconnected,
-    PeerHandshakeFailed,
 )
 from torrentclient.message import BitField, Handshake, HaveMessage, Message
 from torrentclient.message_factory import MessageFactory
@@ -56,11 +55,11 @@ class Peer:
         response = self.receive_message()
         self.verify_handshake(response)
 
-    def verify_handshake(self, handshake):
-        if self.handshake == handshake:
+    def verify_handshake(self, message) -> bool:
+        if self.handshake == message:
             self.connected = True
-        else:
-            raise PeerHandshakeFailed
+            return True
+        return False
 
     def set_bitfield(self, bitfield: BitField):
         self.bitfield = bitfield.bitfield

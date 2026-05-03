@@ -5,7 +5,6 @@ import requests
 
 from torrentclient.bcoder import bdecode
 from torrentclient.configuration import CONFIGURATION
-from torrentclient.exceptions import UnexpectedResponse
 from torrentclient.peer import Peer
 from torrentclient.tracker import Tracker
 
@@ -33,7 +32,7 @@ class HTTPTracker(Tracker):
             raw_response = requests.get(self.url, params=params).content
             tracker_response = bdecode(io.BytesIO(raw_response), mode="str")
             logging.getLogger("BitTorrent").info(f"success in scraping {self.url}")
-        except (requests.exceptions.RequestException, TypeError, UnexpectedResponse):
+        except (requests.exceptions.RequestException, TypeError):
             logging.getLogger("BitTorrent").error(f"Failed to scrape {self.url}")
             return []
 

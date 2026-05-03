@@ -10,7 +10,6 @@ from torrentclient.exceptions import (
     NoPeersHavePiece,
     PeerConnectionFailed,
     PeerDisconnected,
-    PeerHandshakeFailed,
 )
 from torrentclient.message import MessageTypes
 from torrentclient.peer import Peer
@@ -68,7 +67,7 @@ class PeersManager:
                 f"Adding peer {peer} which is {len(self.connected_peers)}/{self.max_peers}"
             )
 
-        except (OSError, PeerHandshakeFailed, PeerDisconnected):
+        except (OSError, PeerDisconnected):
             pass
 
     def send_handshakes(self, my_id, info_hash):

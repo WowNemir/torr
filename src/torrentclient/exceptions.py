@@ -2,19 +2,7 @@ class BasicException(Exception):
     pass
 
 
-class UnknownTracker(BasicException):
-    pass
-
-
-class NotSupported(BasicException):
-    pass
-
-
 class PeerConnectionFailed(BasicException):
-    pass
-
-
-class PeerHandshakeFailed(BasicException):
     pass
 
 
@@ -35,12 +23,4 @@ class NoPeersHavePiece(BasicException):
 
 
 class AllPeersChocked(BasicException):
-    pass
-
-
-class NoTrackersFound(BasicException):
-    pass
-
-
-class UnexpectedResponse(BasicException):
     pass

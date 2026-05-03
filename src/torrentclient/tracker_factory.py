@@ -1,7 +1,6 @@
 from urllib.parse import urlparse
 
 from torrentclient.configuration import CONFIGURATION
-from torrentclient.exceptions import UnknownTracker
 from torrentclient.http_tracker import HTTPTracker
 from torrentclient.tracker import Tracker
 from torrentclient.udp_tracker import UDPTracker
@@ -23,7 +22,7 @@ class TrackerFactory:
             if not CONFIGURATION.tcp_only:
                 return UDPTracker(url)
         else:
-            raise UnknownTracker(url)
+            raise NotImplementedError("Unsupported protocol")
 
     @staticmethod
     def create_trackers(urls: list[str]) -> list[Tracker]:
