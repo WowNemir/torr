@@ -12,7 +12,6 @@ from torrentclient.Exceptions import (
     AllPeersChocked,
     NoPeersHavePiece,
     NoTrackersFound,
-    OutOfPeers,
     PeerDisconnected,
     PieceIsFull,
     PieceIsPending,
@@ -134,13 +133,12 @@ class TorrentClient:
 
     def handle_messages(self):
         while not self._all_pieces_full():
-            try:
-                # Utils.console.print.f'[purple]Waiting for message...')
-                messages = self.peer_manager.receive_messages()
-            except OutOfPeers:
+            if len(self.peer_manager.connected_peers) == 0:
                 logger.error("No peers found, sleep for %d seconds", SHORT_RETRY_INTERVAL)
                 time.sleep(SHORT_RETRY_INTERVAL)
                 continue
+            try:
+                messages = self.peer_manager.receive_messages()
             except OSError as e:
                 logger.info("Unknown socket error: %s", e)
                 continue

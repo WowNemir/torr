@@ -8,7 +8,6 @@ from torrentclient.Configuration import CONFIGURATION
 from torrentclient.Exceptions import (
     AllPeersChocked,
     NoPeersHavePiece,
-    OutOfPeers,
     PeerConnectionFailed,
     PeerDisconnected,
     PeerHandshakeFailed,
@@ -114,10 +113,6 @@ class PeersManager:
         """
         Receive new messages from clients
         """
-
-        # First, check if we out of peers
-        if len(self.connected_peers) == 0:
-            raise OutOfPeers
 
         # Check for new readable sockets from the connected peers
         sockets = [peer.socket for peer in self.connected_peers]  # The bug resides in here...

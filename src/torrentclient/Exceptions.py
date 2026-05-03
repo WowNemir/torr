@@ -22,10 +22,6 @@ class PeerDisconnected(BasicException):
     pass
 
 
-class OutOfPeers(BasicException):
-    pass
-
-
 class PieceIsPending(BasicException):
     pass
 
