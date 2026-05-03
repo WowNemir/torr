@@ -2,10 +2,10 @@ import logging
 import socket
 from urllib.parse import urlparse
 
-from torrentclient.configuration import CONFIGURATION
-from torrentclient.peer import Peer
-from torrentclient.tracker import Tracker
-from torrentclient.udp_tracker_message import Announce, AnnounceResult, Connection
+from torr.configuration import CONFIGURATION
+from torr.peer import Peer
+from torr.tracker import Tracker
+from torr.udp_tracker_message import Announce, AnnounceResult, Connection
 
 
 class UDPTracker(Tracker):

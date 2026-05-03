@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 
-from torrentclient.bittorrent import TorrentClient
+from torr.bittorrent import TorrentClient
 
 
 def main():

@@ -1,7 +1,7 @@
 import hashlib
 import logging
 
-from torrentclient.bcoder import bdecode, bencode
+from torr.bcoder import bdecode, bencode
 
 
 class TorrentFile:

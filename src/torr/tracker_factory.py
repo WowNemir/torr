@@ -1,9 +1,9 @@
 from urllib.parse import urlparse
 
-from torrentclient.configuration import CONFIGURATION
-from torrentclient.http_tracker import HTTPTracker
-from torrentclient.tracker import Tracker
-from torrentclient.udp_tracker import UDPTracker
+from torr.configuration import CONFIGURATION
+from torr.http_tracker import HTTPTracker
+from torr.tracker import Tracker
+from torr.udp_tracker import UDPTracker
 
 
 class TrackerFactory:

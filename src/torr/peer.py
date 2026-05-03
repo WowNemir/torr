@@ -5,13 +5,13 @@ import struct
 
 from bitstring import BitArray
 
-from torrentclient.configuration import CONFIGURATION
-from torrentclient.exceptions import (
+from torr.configuration import CONFIGURATION
+from torr.exceptions import (
     PeerConnectionFailed,
     PeerDisconnected,
 )
-from torrentclient.message import BitField, Handshake, HaveMessage, Message
-from torrentclient.message_factory import MessageFactory
+from torr.message import BitField, Handshake, HaveMessage, Message
+from torr.message_factory import MessageFactory
 
 
 class Peer:

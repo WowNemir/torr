@@ -2,8 +2,8 @@ import socket
 import struct
 from abc import ABC, abstractmethod
 
-from torrentclient.configuration import CONFIGURATION
-from torrentclient.peer import Peer
+from torr.configuration import CONFIGURATION
+from torr.peer import Peer
 
 
 class Tracker(ABC):

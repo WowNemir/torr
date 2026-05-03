@@ -5,7 +5,7 @@ from importlib import metadata
 
 from rich.console import Console
 
-from torrentclient.peer import Peer
+from torr.peer import Peer
 
 console = Console()
 
@@ -42,7 +42,7 @@ def generate_peer_id():
     Generate random peer id with length of 20 bytes
     """
     try:
-        version = metadata.version("torrentclient").replace(".", "") + "0"
+        version = metadata.version("torr").replace(".", "") + "0"
     except:  # noqa
         version = "0000"
     id_suffix = "".join([random.choice(string.ascii_letters) for _ in range(12)])

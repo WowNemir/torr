@@ -2,7 +2,7 @@ import io
 
 import pytest
 
-from torrentclient.bcoder import bdecode, bencode
+from torr.bcoder import bdecode, bencode
 
 
 def test_decode_types():

@@ -1,4 +1,4 @@
-from torrentclient.message import (
+from torr.message import (
     BitField,
     Choke,
     Handshake,

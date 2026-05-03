@@ -4,15 +4,15 @@ import random
 import select
 import threading
 
-from torrentclient.configuration import CONFIGURATION
-from torrentclient.exceptions import (
+from torr.configuration import CONFIGURATION
+from torr.exceptions import (
     AllPeersChocked,
     NoPeersHavePiece,
     PeerConnectionFailed,
     PeerDisconnected,
 )
-from torrentclient.message import MessageTypes
-from torrentclient.peer import Peer
+from torr.message import MessageTypes
+from torr.peer import Peer
 
 
 class PeersManager:

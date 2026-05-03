@@ -3,10 +3,10 @@ import logging
 
 import requests
 
-from torrentclient.bcoder import bdecode
-from torrentclient.configuration import CONFIGURATION
-from torrentclient.peer import Peer
-from torrentclient.tracker import Tracker
+from torr.bcoder import bdecode
+from torr.configuration import CONFIGURATION
+from torr.peer import Peer
+from torr.tracker import Tracker
 
 
 class HTTPTracker(Tracker):
