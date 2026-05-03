@@ -11,13 +11,12 @@ console = Console()
 
 
 def read_peers_from_input(peers_input):
-
     peers = []
-    if os.path.isfile(peers_input) :
+    if os.path.isfile(peers_input):
         """
         Read the peers ip and port from the peers file
         """
-        with open(peers_file_path, 'rb') as peers_file:
+        with open(peers_input, "rb") as peers_file:
             connections = peers_file.readlines()
 
         for connection in connections:
@@ -26,7 +25,7 @@ def read_peers_from_input(peers_input):
             peer = Peer(ip=ip, port=port)
             peers.append(peer)
 
-    else :
+    else:
         """
         Read the peers ip and port from string input delimited by commas
         """
@@ -42,12 +41,12 @@ def generate_peer_id():
     """
     Generate random peer id with length of 20 bytes
     """
-    try :
-        version = metadata.version('torrentclient').replace('.', '') + '0'
-    except :
+    try:
+        version = metadata.version("torrentclient").replace(".", "") + "0"
+    except:  # noqa
         version = "0000"
-    id_suffix = ''.join([random.choice(string.ascii_letters) for _ in range(12)])
-    peer_id = f'-GF{version}-{id_suffix}'
+    id_suffix = "".join([random.choice(string.ascii_letters) for _ in range(12)])
+    peer_id = f"-GF{version}-{id_suffix}"
     assert len(peer_id) == 20
 
     return peer_id.encode()

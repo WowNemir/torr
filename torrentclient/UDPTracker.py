@@ -1,17 +1,15 @@
 import logging
 import socket
-from typing import List
 from urllib.parse import urlparse
 
+from torrentclient.torrentclient.Configuration import CONFIGURATION
 from torrentclient.torrentclient.Peer import Peer
 from torrentclient.torrentclient.Tracker import Tracker
-from torrentclient.torrentclient.UDPTrackerMessage import Connection, Announce, AnnounceResult
-from torrentclient.torrentclient.Configuration import CONFIGURATION
+from torrentclient.torrentclient.UDPTrackerMessage import Announce, AnnounceResult, Connection
 
 
 class UDPTracker(Tracker):
-
-    def get_peers(self, peer_id: bytes, port: int, torrent) -> List[Peer]:
+    def get_peers(self, peer_id: bytes, port: int, torrent) -> list[Peer]:
         """
         Connect to udp tracker and retrieve from him list of peers. Following the
         BitTorrent UDP Tracker specification, And sourceforge unofficial guide:
@@ -37,31 +35,21 @@ class UDPTracker(Tracker):
             connection_id = connection_response.connection_id
 
             if connection_request != connection_response:
-                logging.getLogger("BitTorrent").error(
-                    "UDP Tracker request and response are not equal"
-                )
+                logging.getLogger("BitTorrent").error("UDP Tracker request and response are not equal")
 
-            announce = Announce(
-                connection_id, torrent.hash, peer_id, torrent.length, port
-            )
+            announce = Announce(connection_id, torrent.hash, peer_id, torrent.length, port)
             sock.sendto(announce.to_bytes(), tracker_address)
 
             response = sock.recv(CONFIGURATION.udp_tracker_receive_size)  # Answer should be 98 bytes
             announce_response: AnnounceResult = AnnounceResult.from_bytes(response)
 
             if announce_response.transaction_id != announce.transaction_id:
-                logging.getLogger("BitTorrent").error(
-                    "UDP Tracker request and response are not equal"
-                )
+                logging.getLogger("BitTorrent").error("UDP Tracker request and response are not equal")
 
             peers = Tracker.extract_compact_peers(announce_response.peers)
-            logging.getLogger("BitTorrent").info(
-                f"success in scraping {self.url} got {len(peers)} peers"
-            )
+            logging.getLogger("BitTorrent").info(f"success in scraping {self.url} got {len(peers)} peers")
             return peers
 
-        except socket.error:
-            logging.getLogger("BitTorrent").error(
-                f"Tracker {url_details.hostname}:{url_details.port} give no answer"
-            )
+        except OSError:
+            logging.getLogger("BitTorrent").error(f"Tracker {url_details.hostname}:{url_details.port} give no answer")
             return []

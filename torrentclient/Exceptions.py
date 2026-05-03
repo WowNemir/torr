@@ -46,7 +46,6 @@ class AllPeersChocked(BasicException):
     pass
 
 
-
 class NoTrackersFound(BasicException):
     pass
 

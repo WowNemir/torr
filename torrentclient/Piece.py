@@ -1,14 +1,12 @@
-from typing import List, Union
-
 from torrentclient.torrentclient.Block import Block, BlockStatus, create_blocks
-from torrentclient.torrentclient.Exceptions import PieceIsPending, PieceIsFull
+from torrentclient.torrentclient.Exceptions import PieceIsFull, PieceIsPending
 
 
 class Piece:
     def __init__(self, index, size):
         self.index = index
         self.size = size
-        self.blocks: List[Block] = create_blocks(self.size)
+        self.blocks: list[Block] = create_blocks(self.size)
 
     def __str__(self):
         return f"[{self.index}]"
@@ -24,7 +22,7 @@ class Piece:
 
         return True
 
-    def get_free_block(self) -> Union[Block, None]:
+    def get_free_block(self) -> Block | None:
         """
         Iterate over the blocks and
         check if of them is free
@@ -62,12 +60,12 @@ class Piece:
         return data
 
 
-def create_pieces(file_size, piece_size) -> List[Piece]:
+def create_pieces(file_size, piece_size) -> list[Piece]:
     """
     Create list of empty pieces for the given
     file_size and the given piece_size
     """
-    pieces: List[Piece] = []
+    pieces: list[Piece] = []
     pieces_amount = int(file_size / piece_size)
 
     # Generate pieces

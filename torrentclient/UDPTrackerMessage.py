@@ -1,4 +1,3 @@
-import logging
 import random
 import struct
 
@@ -6,9 +5,7 @@ from torrentclient.torrentclient.Configuration import CONFIGURATION
 
 
 class Connection:
-    def __init__(
-        self, transaction_id=None, connection_id=CONFIGURATION.default_connection_id, action=0
-    ):
+    def __init__(self, transaction_id=None, connection_id=CONFIGURATION.default_connection_id, action=0):
         self.transaction_id = transaction_id
         self.connection_id = connection_id
         self.action = action
@@ -28,22 +25,11 @@ class Connection:
     @staticmethod
     def from_bytes(payload):
         action, transaction_id, connection_id = struct.unpack(">IIQ", payload)
-        return Connection(
-            transaction_id=transaction_id, connection_id=connection_id, action=action
-        )
+        return Connection(transaction_id=transaction_id, connection_id=connection_id, action=action)
 
 
 class Announce:
-    def __init__(
-        self,
-        connection_id,
-        info_hash,
-        peer_id,
-        left,
-        port,
-        action=1,
-        transaction_id=None
-    ):
+    def __init__(self, connection_id, info_hash, peer_id, left, port, action=1, transaction_id=None):
         self.connection_id = connection_id
         self.transaction_id = transaction_id
         self.info_hash = info_hash
@@ -98,6 +84,4 @@ class AnnounceResult:
         if len(payload) >= 20:
             return AnnounceResult(*struct.unpack(">IIIII", payload[:20]), payload[20:])
         else:
-            return AnnounceResult(
-                *struct.unpack(">II", payload[:8]), 0, 0, []
-            )
+            return AnnounceResult(*struct.unpack(">II", payload[:8]), 0, 0, [])

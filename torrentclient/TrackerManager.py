@@ -1,16 +1,12 @@
-from typing import List
-
 from torrentclient.torrentclient.Peer import Peer
 from torrentclient.torrentclient.Tracker import Tracker
 
 
 class TrackerManager:
-    def __init__(self, trackers: List[Tracker]):
-        self.trackers: List[Tracker] = trackers
+    def __init__(self, trackers: list[Tracker]):
+        self.trackers: list[Tracker] = trackers
 
-    def get_peers(
-        self, peer_id: bytes, port: int, torrent_file
-    ) -> List[Peer]:
+    def get_peers(self, peer_id: bytes, port: int, torrent_file) -> list[Peer]:
         """
         Return list of peers, by calling each tracker 'get_peer' method.
         This will cause a series of HTTP/UDP requests, in the end each

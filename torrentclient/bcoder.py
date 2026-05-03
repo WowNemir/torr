@@ -1,6 +1,6 @@
-from typing import Literal
 import io
 from collections.abc import Generator
+from typing import Literal
 
 type BEncoded = int | bytes | list["BEncoded"] | dict[bytes | str, "BEncoded"] | str
 
@@ -11,7 +11,7 @@ class Decoder:
         self.content = bytes(f.read())
 
     def read_bytes(self, n: int) -> bytes:
-        res = self.content[self.position:self.position+n]
+        res = self.content[self.position : self.position + n]
         self.position += n
         return res
 
@@ -21,13 +21,13 @@ class Decoder:
         if end_ind == -1:
             raise ValueError("Delimiter not found")
 
-        res = self.content[self.position:end_ind]
+        res = self.content[self.position : end_ind]
         self.position = end_ind + len(end)
         return res
 
-    def decode_items(self, mode: Literal['str', 'bytes']='bytes') -> Generator[BEncoded]:
+    def decode_items(self, mode: Literal["str", "bytes"] = "bytes") -> Generator[BEncoded]:
         while head := self.read_bytes(1):
-            if head == b'e':
+            if head == b"e":
                 return
             if head == b"l":
                 yield list(self.decode_items(mode=mode))
@@ -41,7 +41,7 @@ class Decoder:
             elif head.isdigit():
                 self.read_bytes(-1)
                 length = int(self.read_until(b":"))
-                if mode == 'str':
+                if mode == "str":
                     value = self.read_bytes(length)
                     try:
                         value = value.decode()
@@ -55,29 +55,26 @@ class Decoder:
                 raise ValueError(f"Unknown token: {head}")
 
 
-
-
-def bdecode(file: io.BufferedReader, mode: Literal['str', 'bytes'] = 'bytes'):
+def bdecode(file: io.BufferedReader, mode: Literal["str", "bytes"] = "bytes"):
     return next(Decoder(file).decode_items(mode))
 
 
 def bencode(obj) -> bytes:
     if isinstance(obj, int):
-        return b'i' + str(obj).encode() + b'e'
+        return b"i" + str(obj).encode() + b"e"
     elif isinstance(obj, bytes):
-        return str(len(obj)).encode() + b':' + obj
+        return str(len(obj)).encode() + b":" + obj
     elif isinstance(obj, str):
         return bencode(obj.encode())
     elif isinstance(obj, list):
         encoded_items = [bencode(item) for item in obj]
-        return b'l' + b''.join(encoded_items) + b'e'
+        return b"l" + b"".join(encoded_items) + b"e"
     elif isinstance(obj, dict):
         encoded_key_values = []
         for key, value in obj.items():
-
             encoded_key_values.append(bencode(key))
             encoded_key_values.append(bencode(value))
 
-        return b'd' + b''.join(encoded_key_values) + b'e'
+        return b"d" + b"".join(encoded_key_values) + b"e"
     else:
-        return b''
+        return b""

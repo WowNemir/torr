@@ -1,19 +1,17 @@
 import io
 import logging
-from typing import List
 
 import requests
 
+from torrentclient.torrentclient.bcoder import bdecode
+from torrentclient.torrentclient.Configuration import CONFIGURATION
+from torrentclient.torrentclient.Exceptions import UnexpectedResponse
 from torrentclient.torrentclient.Peer import Peer
 from torrentclient.torrentclient.Tracker import Tracker
-from torrentclient.torrentclient.bcoder import bdecode
-from torrentclient.torrentclient.Exceptions import UnexpectedResponse
-from torrentclient.torrentclient.Configuration import CONFIGURATION
 
 
 class HTTPTracker(Tracker):
-
-    def get_peers(self, peer_id: bytes, port: int, torrent) -> List[Peer]:
+    def get_peers(self, peer_id: bytes, port: int, torrent) -> list[Peer]:
         """
         Request from the http tracker all the peers,
         parse them, and then return list containing
@@ -29,11 +27,11 @@ class HTTPTracker(Tracker):
             "port": port,
             "left": torrent.length,
             "event": "started",
-            "timeout": CONFIGURATION.timeout
+            "timeout": CONFIGURATION.timeout,
         }
         try:
             raw_response = requests.get(self.url, params=params).content
-            tracker_response = bdecode(io.BytesIO(raw_response), mode='str')
+            tracker_response = bdecode(io.BytesIO(raw_response), mode="str")
             logging.getLogger("BitTorrent").info(f"success in scraping {self.url}")
             print(tracker_response)
         except (requests.exceptions.RequestException, TypeError, UnexpectedResponse):
@@ -48,14 +46,9 @@ class HTTPTracker(Tracker):
                 peers_key += "6"
 
             if type(tracker_response[peers_key]) is list:
-                peers = [
-                    Peer(info["ip"], info["port"], info["peer id"])
-                    for info in tracker_response[peers_key]
-                ]
+                peers = [Peer(info["ip"], info["port"], info["peer id"]) for info in tracker_response[peers_key]]
             else:
-                logging.getLogger("BitTorrent").info(
-                    f"Tracker {self.url} using compact mode"
-                )
+                logging.getLogger("BitTorrent").info(f"Tracker {self.url} using compact mode")
                 peers = Tracker.extract_compact_peers(tracker_response[peers_key])
 
         elif "failure reason" in tracker_response:
@@ -63,8 +56,6 @@ class HTTPTracker(Tracker):
                 f'Failure in tracker {self.url}: {tracker_response["failure reason"]}'
             )
         else:
-            logging.getLogger("BitTorrent").error(
-                f"Unknown exception in tracker {self.url}"
-            )
+            logging.getLogger("BitTorrent").error(f"Unknown exception in tracker {self.url}")
 
         return peers

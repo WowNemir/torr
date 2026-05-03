@@ -1,10 +1,9 @@
 import socket
 import struct
 from abc import ABC, abstractmethod
-from typing import List
 
-from torrentclient.torrentclient.Peer import Peer
 from torrentclient.torrentclient.Configuration import CONFIGURATION
+from torrentclient.torrentclient.Peer import Peer
 
 
 class Tracker(ABC):
@@ -12,11 +11,11 @@ class Tracker(ABC):
         self.url = url
 
     @abstractmethod
-    def get_peers(self, peer_id: bytes, port: int, torrent) -> List[Peer]:
+    def get_peers(self, peer_id: bytes, port: int, torrent) -> list[Peer]:
         pass
 
     @staticmethod
-    def extract_compact_peers(peers_bytes) -> List[Peer]:
+    def extract_compact_peers(peers_bytes) -> list[Peer]:
         offset = 0
         peers = []
         if not peers_bytes:

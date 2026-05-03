@@ -1,6 +1,5 @@
 import time
 from enum import Enum
-from typing import List
 
 
 class BlockStatus(Enum):
@@ -35,11 +34,11 @@ class Block:
                 self.status = BlockStatus.FREE
 
 
-def create_blocks(piece_size) -> List[Block]:
+def create_blocks(piece_size) -> list[Block]:
     """
     Create blocks according to blocks_length parameter
     """
-    blocks: List[Block] = []
+    blocks: list[Block] = []
     blocks_amount = int(piece_size / Block.default_size)
     for i in range(blocks_amount):
         block = Block(i * Block.default_size)

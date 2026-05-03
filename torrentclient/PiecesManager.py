@@ -1,7 +1,7 @@
-from pathlib import Path
 import logging
 import os
 import tempfile
+from pathlib import Path
 
 
 class DiskManager:
@@ -19,7 +19,7 @@ class DiskManager:
             self.file = tempfile.TemporaryFile()
         else:
             # Update to use output_directory for single file torrent
-            file_path = self.output_directory /self.torrent.file_name
+            file_path = self.output_directory / self.torrent.file_name
             self.file = open(file_path, "wb")
 
     def write_piece(self, piece, piece_size):
@@ -41,10 +41,10 @@ class DiskManager:
         # If torrent contain multiple file, split them
         if self.multi_part:
             self.file.seek(0)
-            for file in self.torrent.info['files']:
+            for file in self.torrent.info["files"]:
                 # Calculate the full path of each file including the output_directory
                 file_path: Path = Path(self.output_directory) / self.torrent.file_name
-                for entity in file['path']:
+                for entity in file["path"]:
                     file_path: Path = file_path / entity
 
                 logging.getLogger("BitTorrent").debug(f"Def close file path is {file_path}")
@@ -53,8 +53,8 @@ class DiskManager:
                 logging.getLogger("BitTorrent").debug(f"Writing data in offsets {self.file.tell()}:{file['length']}")
 
                 # Create the file and copy the data
-                f = open(file_path, 'wb')
-                file_data = self.file.read(file['length'])
+                f = open(file_path, "wb")
+                file_data = self.file.read(file["length"])
                 f.write(file_data)
                 f.close()
 

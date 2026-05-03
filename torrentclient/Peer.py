@@ -5,18 +5,17 @@ import struct
 
 from bitstring import BitArray
 
+from torrentclient.torrentclient.Configuration import CONFIGURATION
 from torrentclient.torrentclient.Exceptions import (
     PeerConnectionFailed,
     PeerDisconnected,
     PeerHandshakeFailed,
 )
-from torrentclient.torrentclient.Message import Message, Handshake, BitField, HaveMessage
+from torrentclient.torrentclient.Message import BitField, Handshake, HaveMessage, Message
 from torrentclient.torrentclient.MessageFactory import MessageFactory
-from torrentclient.torrentclient.Configuration import CONFIGURATION
 
 
 class Peer:
-
     def __init__(self, ip: str, port: int, _id: str = "00000000000000000000"):
         self.ip = ip
         self.port = port
@@ -42,8 +41,8 @@ class Peer:
         """
         try:
             self.socket.connect((self.ip, self.port))
-        except socket.error as e:
-            raise PeerConnectionFailed(f"Failed to connect: {str(e)}")
+        except OSError as e:
+            raise PeerConnectionFailed(f"Failed to connect: {str(e)}") from e
 
     def do_handshake(self, my_id, info_hash):
         """
@@ -70,9 +69,7 @@ class Peer:
         if have.index < self.bitfield.length:
             self.bitfield[have.index] = True
         else:
-            logging.getLogger("BitTorrent").info(
-                f"Have message {have.index} smaller then {self.bitfield.length}"
-            )
+            logging.getLogger("BitTorrent").info(f"Have message {have.index} smaller then {self.bitfield.length}")
 
     def receive_message(self) -> Message:
         # After handshake
@@ -81,11 +78,11 @@ class Peer:
             # print(f"{myid} Waiting for {self}")
             packet_length = self.socket.recv(1)
 
-        except OSError:
-            raise PeerDisconnected
+        except OSError as e:
+            raise PeerDisconnected from e
 
         if packet_length == b"":
-            logging.getLogger('BitTorrent').debug(f'Client in ip {self.ip} with id {self.id} disconnected')
+            logging.getLogger("BitTorrent").debug(f"Client in ip {self.ip} with id {self.id} disconnected")
             self.socket.close()
             raise PeerDisconnected
 
@@ -94,14 +91,12 @@ class Peer:
             while len(packet_length) < 4:
                 odd = 4 - len(packet_length)
                 packet_length = packet_length + self.socket.recv(odd)
-                logging.getLogger("BitTorrent").error(
-                    f"Setting size again in {self}, length: {packet_length}"
-                )
+                logging.getLogger("BitTorrent").error(f"Setting size again in {self}, length: {packet_length}")
 
             try:
                 length = struct.unpack(">I", packet_length)[0]  # Big endian integer
-            except struct.error:
-                raise struct.error
+            except struct.error as e:
+                raise struct.error from e
             data = self.socket.recv(length)
 
             while len(data) != length:
@@ -114,9 +109,7 @@ class Peer:
             protocol_len: int = struct.unpack(">B", packet_length)[0]
             handshake_bytes = self.socket.recv(protocol_len + CONFIGURATION.handshake_stripped_size)
 
-            return MessageFactory.create_handshake_message(
-                packet_length + handshake_bytes
-            )
+            return MessageFactory.create_handshake_message(packet_length + handshake_bytes)
 
     def send_message(self, message: Message):
         # logging.getLogger('BitTorrent').debug(f'Sending message {type(message)} to {self}')
@@ -125,8 +118,8 @@ class Peer:
         message_bytes = message.to_bytes()
         try:
             self.socket.send(message_bytes)
-        except OSError:
-            raise PeerDisconnected
+        except OSError as e:
+            raise PeerDisconnected from e
 
     def set_choked(self):
         self.is_choked = True

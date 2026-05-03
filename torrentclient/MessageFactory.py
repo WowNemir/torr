@@ -1,14 +1,14 @@
 from torrentclient.torrentclient.Message import (
-    MessageCode,
-    Message,
-    Handshake,
-    UnknownMessage,
-    KeepAlive,
     BitField,
     Choke,
-    Unchoke,
-    PieceMessage,
+    Handshake,
     HaveMessage,
+    KeepAlive,
+    Message,
+    MessageCode,
+    PieceMessage,
+    Unchoke,
+    UnknownMessage,
 )
 
 

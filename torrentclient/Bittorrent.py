@@ -2,7 +2,6 @@ import logging
 import socket
 import time
 from threading import Thread
-from typing import List
 
 from rich import progress
 
@@ -37,19 +36,21 @@ from torrentclient.torrentclient.TrackerFactory import TrackerFactory
 from torrentclient.torrentclient.TrackerManager import TrackerManager
 from torrentclient.torrentclient.Utils import generate_peer_id, read_peers_from_input
 
-logging.basicConfig(level=logging.DEBUG,
-                    format='%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s',
-                    datefmt='%Y-%m-%d %H:%M:%S'
-                    )
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
 
 
 class TorrentClient:
     def __init__(
-            self, torrent: str,
-            max_peers: int = CONFIGURATION.max_peers,
-            use_progress_bar: bool = True,
-            peers_input: str = None,
-            output_dir: str = '.'
+        self,
+        torrent: str,
+        max_peers: int = CONFIGURATION.max_peers,
+        use_progress_bar: bool = True,
+        peers_input: str = None,
+        output_dir: str = ".",
     ):
         self.peer_manager: PeersManager = PeersManager(max_peers)
         self.tracker_manager: TrackerManager
@@ -58,7 +59,7 @@ class TorrentClient:
         self.listener_socket.settimeout(CONFIGURATION.timeout)
         self.port: int = CONFIGURATION.listening_port
         self.peers_input: str = peers_input
-        self.pieces: List[Piece] = []
+        self.pieces: list[Piece] = []
         self.should_continue = True
         self.use_progress_bar = use_progress_bar
         if use_progress_bar:
@@ -74,9 +75,7 @@ class TorrentClient:
             trackers.append(tracker)
 
         if "announce-list" in self.torrent.config:
-            new_trackers = TrackerFactory.create_trackers(
-                self.torrent.config["announce-list"]
-            )
+            new_trackers = TrackerFactory.create_trackers(self.torrent.config["announce-list"])
             trackers += new_trackers
 
         while None in trackers:
@@ -108,9 +107,7 @@ class TorrentClient:
         if len(self.peer_manager.peers) == 0:
             self.setup()
 
-        handshakes = Thread(
-            target=self.peer_manager.send_handshakes, args=(self.id, self.torrent.hash)
-        )
+        handshakes = Thread(target=self.peer_manager.send_handshakes, args=(self.id, self.torrent.hash))
         requester = Thread(target=self.piece_requester)
 
         handshakes.start()
@@ -123,8 +120,8 @@ class TorrentClient:
     def progress_download(self):
         if self.use_progress_bar:
             for _ in progress.track(
-                    range(len(self.pieces)),
-                    description=f"Downloading {self.torrent.file_name}",
+                range(len(self.pieces)),
+                description=f"Downloading {self.torrent.file_name}",
             ):
                 self.handle_messages()
         else:
@@ -137,12 +134,10 @@ class TorrentClient:
                 # Utils.console.print.f'[purple]Waiting for message...')
                 messages = self.peer_manager.receive_messages()
             except OutOfPeers:
-                logging.getLogger("BitTorrent").error(
-                    f"No peers found, sleep for 2 seconds"
-                )
+                logging.getLogger("BitTorrent").error("No peers found, sleep for 2 seconds")
                 time.sleep(2)
                 continue
-            except socket.error as e:
+            except OSError as e:
                 logging.getLogger("BitTorrent").info(f"Unknown socket error: {e}")
                 continue
 
@@ -173,9 +168,7 @@ class TorrentClient:
                         return
 
                 else:
-                    logging.getLogger("BitTorrent").error(
-                        f"Unknown message: {message.id}"
-                    )  # should be error
+                    logging.getLogger("BitTorrent").error(f"Unknown message: {message.id}")  # should be error
 
     def piece_requester(self):
         """
@@ -189,7 +182,7 @@ class TorrentClient:
             self.request_current_block()
             time.sleep(CONFIGURATION.iteration_sleep_interval)
 
-        logging.getLogger("BitTorrent").info(f"Exiting the requesting loop...")
+        logging.getLogger("BitTorrent").info("Exiting the requesting loop...")
         self.piece_manager.close()
 
     def request_current_block(self):
@@ -209,22 +202,17 @@ class TorrentClient:
                 continue
 
             except NoPeersHavePiece:
-                logging.getLogger("BitTorrent").debug(
-                    f"No peers have piece {piece.index}"
-                )
+                logging.getLogger("BitTorrent").debug(f"No peers have piece {piece.index}")
                 time.sleep(2.5)
 
             except AllPeersChocked:
                 logging.getLogger("BitTorrent").debug(
-                    f"All of "
-                    f"{len(self.peer_manager.connected_peers)} peers is chocked"
+                    f"All of " f"{len(self.peer_manager.connected_peers)} peers is chocked"
                 )
                 time.sleep(2.5)
 
             except PeerDisconnected:
-                logging.getLogger("BitTorrent").error(
-                    f"Peer {peer} disconnected when requesting for piece"
-                )
+                logging.getLogger("BitTorrent").error(f"Peer {peer} disconnected when requesting for piece")
                 self.peer_manager.remove_peer(peer)
 
         if self._all_pieces_full():
@@ -260,21 +248,14 @@ class TorrentClient:
                 self.pieces.remove(piece)
                 if not self.use_progress_bar:
                     logging.getLogger("BitTorrent").info(
-                        "Progress: {have}/{total} Unchoked peers: {peers_have}/{total_peers}".format(
-                            have=self.piece_manager.written,
-                            total=self.number_of_pieces,
-                            peers_have=self.peer_manager.num_of_unchoked,
-                            total_peers=len(self.peer_manager.connected_peers),
-                        )
+                        f"Progress: {self.piece_manager.written}/{self.number_of_pieces} Unchoked peers: {self.peer_manager.num_of_unchoked}/{len(self.peer_manager.connected_peers)}"
                     )
 
                 del piece
                 return True
 
         except PieceIsPending:
-            logging.getLogger("BitTorrent").debug(
-                f"Piece {pieceMessage.index} is pending"
-            )
+            logging.getLogger("BitTorrent").debug(f"Piece {pieceMessage.index} is pending")
 
         except NoPieceFound:
             pass

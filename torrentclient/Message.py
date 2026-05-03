@@ -1,7 +1,6 @@
 import enum
 import struct
 from abc import ABC, abstractmethod
-from typing import Union
 
 from bitstring import BitArray
 
@@ -78,13 +77,11 @@ class BitField(Message):
         return BitField(bitfield)
 
     def to_bytes(self) -> bytes:
-        raise NotImplemented
+        raise NotImplementedError
 
 
 class Handshake(Message):
-    def __init__(
-        self, peer_id: bytes, info_hash: bytes, protocol: str = "BitTorrent protocol"
-    ):
+    def __init__(self, peer_id: bytes, info_hash: bytes, protocol: str = "BitTorrent protocol"):
         self.id = MessageCode.HANDSHAKE
         self.peer_id = peer_id
         self.info_hash = info_hash
@@ -109,9 +106,7 @@ class Handshake(Message):
             print("Payload error:", payload)
             return b""
         protocol_len = struct.unpack(">B", payload[:1])[0]
-        protocol, reserved, info_hash, peer_id = struct.unpack(
-            f">{protocol_len}s8s20s20s", payload[1:]
-        )
+        protocol, reserved, info_hash, peer_id = struct.unpack(f">{protocol_len}s8s20s20s", payload[1:])
 
         return Handshake(peer_id, info_hash, protocol)
 
@@ -128,9 +123,7 @@ class Request(Message):
         self.length = 13  # bytes
 
     def to_bytes(self) -> bytes:
-        return struct.pack(
-            ">IBIII", self.length, self.id, self.index, self.begin, self.piece_length
-        )
+        return struct.pack(">IBIII", self.length, self.id, self.index, self.begin, self.piece_length)
 
     @staticmethod
     def from_bytes(payload):
@@ -197,14 +190,4 @@ class KeepAlive(Message):
 
 
 # Used for typing
-MessageTypes = Union[
-    Message,
-    Handshake,
-    Request,
-    PieceMessage,
-    BitField,
-    HaveMessage,
-    Unchoke,
-    Choke,
-    UnknownMessage,
-]
+MessageTypes = Message | Handshake | Request | PieceMessage | BitField | HaveMessage | Unchoke | Choke | UnknownMessage
