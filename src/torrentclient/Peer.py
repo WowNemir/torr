@@ -75,7 +75,6 @@ class Peer:
         # After handshake
         # myid = random.randint(0, 65536)
         try:
-            # print(f"{myid} Waiting for {self}")
             packet_length = self.socket.recv(1)
 
         except OSError as e:

@@ -33,7 +33,6 @@ class HTTPTracker(Tracker):
             raw_response = requests.get(self.url, params=params).content
             tracker_response = bdecode(io.BytesIO(raw_response), mode="str")
             logging.getLogger("BitTorrent").info(f"success in scraping {self.url}")
-            print(tracker_response)
         except (requests.exceptions.RequestException, TypeError, UnexpectedResponse):
             logging.getLogger("BitTorrent").error(f"Failed to scrape {self.url}")
             return []
