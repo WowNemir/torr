@@ -147,7 +147,7 @@ Non-existing options are ignored.
 
 ## Acknowledgements
 
-This project is inspired by PyBitTorrent
-Copyright (c) gaffner
-Licensed under MIT License
-https://github.com/gaffner/PyBitTorrent
+This project is inspired by PyBitTorrent  
+Copyright (c) gaffner  
+Licensed under MIT License  
+https://github.com/gaffner/PyBitTorrent  
