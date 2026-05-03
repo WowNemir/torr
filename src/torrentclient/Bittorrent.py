@@ -5,10 +5,10 @@ from threading import Thread
 
 from rich import progress
 
-from torrentclient.torrentclient import Utils
-from torrentclient.torrentclient.Block import BlockStatus
-from torrentclient.torrentclient.Configuration import CONFIGURATION
-from torrentclient.torrentclient.Exceptions import (
+from torrentclient import Utils
+from torrentclient.Block import BlockStatus
+from torrentclient.Configuration import CONFIGURATION
+from torrentclient.Exceptions import (
     AllPeersChocked,
     NoPeersHavePiece,
     NoPieceFound,
@@ -18,7 +18,7 @@ from torrentclient.torrentclient.Exceptions import (
     PieceIsFull,
     PieceIsPending,
 )
-from torrentclient.torrentclient.Message import (
+from torrentclient.Message import (
     BitField,
     Choke,
     Handshake,
@@ -28,13 +28,13 @@ from torrentclient.torrentclient.Message import (
     Request,
     Unchoke,
 )
-from torrentclient.torrentclient.PeersManager import PeersManager
-from torrentclient.torrentclient.Piece import Piece, create_pieces
-from torrentclient.torrentclient.PiecesManager import DiskManager
-from torrentclient.torrentclient.TorrentFile import TorrentFile
-from torrentclient.torrentclient.TrackerFactory import TrackerFactory
-from torrentclient.torrentclient.TrackerManager import TrackerManager
-from torrentclient.torrentclient.Utils import generate_peer_id, read_peers_from_input
+from torrentclient.PeersManager import PeersManager
+from torrentclient.Piece import Piece, create_pieces
+from torrentclient.PiecesManager import DiskManager
+from torrentclient.TorrentFile import TorrentFile
+from torrentclient.TrackerFactory import TrackerFactory
+from torrentclient.TrackerManager import TrackerManager
+from torrentclient.Utils import generate_peer_id, read_peers_from_input
 
 logging.basicConfig(
     level=logging.DEBUG,

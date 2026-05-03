@@ -1,9 +1,6 @@
-import sys
 from argparse import ArgumentParser
-from pathlib import Path
 
-sys.path.append(str(object=Path("..").absolute()))
-from torrentclient.torrentclient.Bittorrent import TorrentClient
+from torrentclient.Bittorrent import TorrentClient
 
 
 def main():

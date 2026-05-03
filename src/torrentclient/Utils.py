@@ -5,7 +5,7 @@ from importlib import metadata
 
 from rich.console import Console
 
-from torrentclient.torrentclient.Peer import Peer
+from torrentclient.Peer import Peer
 
 console = Console()
 

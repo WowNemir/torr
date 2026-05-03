@@ -1,6 +1,6 @@
 import json
 
-from torrentclient.torrentclient.Exceptions import InvalidConfigurationValue
+from torrentclient.Exceptions import InvalidConfigurationValue
 
 
 class Configuration:

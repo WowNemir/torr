@@ -1,10 +1,10 @@
 from urllib.parse import urlparse
 
-from torrentclient.torrentclient.Configuration import CONFIGURATION
-from torrentclient.torrentclient.Exceptions import UnknownTracker
-from torrentclient.torrentclient.HTTPTracker import HTTPTracker
-from torrentclient.torrentclient.Tracker import Tracker
-from torrentclient.torrentclient.UDPTracker import UDPTracker
+from torrentclient.Configuration import CONFIGURATION
+from torrentclient.Exceptions import UnknownTracker
+from torrentclient.HTTPTracker import HTTPTracker
+from torrentclient.Tracker import Tracker
+from torrentclient.UDPTracker import UDPTracker
 
 
 class TrackerFactory:
