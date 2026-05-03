@@ -16,7 +16,6 @@ class UDPTracker(Tracker):
         https://www.bittorrent.org/beps/bep_0015.html
         https://xbtt.sourceforge.net/udp_tracker_protocol.html
         """
-        connection_id = 0x41727101980
         url_details = urlparse(self.url)
         tracker_address = (url_details.hostname, url_details.port)
         connection_request = Connection()

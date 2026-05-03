@@ -147,9 +147,6 @@ class PieceMessage(Message):
 
         return PieceMessage(index, offset, data)
 
-    def to_bytes(self) -> bytes:
-        pass
-
     def should_wait_for_data(self):
         return len(self.data) == 0
 
