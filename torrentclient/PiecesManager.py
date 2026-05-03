@@ -1,12 +1,12 @@
+from pathlib import Path
 import logging
 import os
 import tempfile
-from PyBitTorrent import TorrentFile
 
 
 class DiskManager:
-    def __init__(self, output_directory: str, torrent: TorrentFile):
-        self.output_directory = output_directory
+    def __init__(self, output_directory: str, torrent):
+        self.output_directory = Path(output_directory)
         self.torrent = torrent
         self.written = 0
         self.multi_part = "files" in self.torrent.info.keys()
@@ -19,7 +19,7 @@ class DiskManager:
             self.file = tempfile.TemporaryFile()
         else:
             # Update to use output_directory for single file torrent
-            file_path = os.path.join(output_directory, self.torrent.file_name)
+            file_path = self.output_directory /self.torrent.file_name
             self.file = open(file_path, "wb")
 
     def write_piece(self, piece, piece_size):
@@ -43,13 +43,13 @@ class DiskManager:
             self.file.seek(0)
             for file in self.torrent.info['files']:
                 # Calculate the full path of each file including the output_directory
-                file_path = os.path.join(self.output_directory, self.torrent.file_name)
+                file_path: Path = Path(self.output_directory) / self.torrent.file_name
                 for entity in file['path']:
-                    file_path = os.path.join(file_path, entity)
+                    file_path: Path = file_path / entity
 
                 logging.getLogger("BitTorrent").debug(f"Def close file path is {file_path}")
                 logging.getLogger("BitTorrent").debug(f"Diskmanager output directory is {file_path}")
-                os.makedirs(os.path.dirname(file_path), exist_ok=True)  # Create directories if necessary
+                os.makedirs(file_path.parent, exist_ok=True)
                 logging.getLogger("BitTorrent").debug(f"Writing data in offsets {self.file.tell()}:{file['length']}")
 
                 # Create the file and copy the data

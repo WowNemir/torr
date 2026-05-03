@@ -6,7 +6,7 @@ import socket
 import threading
 from typing import List, Dict
 
-from PyBitTorrent.Exceptions import (
+from torrentclient.torrentclient.Exceptions import (
     PeerConnectionFailed,
     PeerDisconnected,
     OutOfPeers,
@@ -14,9 +14,9 @@ from PyBitTorrent.Exceptions import (
     PeerHandshakeFailed,
     AllPeersChocked,
 )
-from PyBitTorrent.Message import MessageTypes
-from PyBitTorrent.Peer import Peer
-from PyBitTorrent.Configuration import CONFIGURATION
+from torrentclient.torrentclient.Message import MessageTypes
+from torrentclient.torrentclient.Peer import Peer
+from torrentclient.torrentclient.Configuration import CONFIGURATION
 
 
 class PeersManager:

@@ -1,6 +1,6 @@
 import json
 
-from PyBitTorrent.Exceptions import InvalidConfigurationValue
+from torrentclient.torrentclient.Exceptions import InvalidConfigurationValue
 
 
 class Configuration:

@@ -3,16 +3,15 @@ import socket
 from typing import List
 from urllib.parse import urlparse
 
-from PyBitTorrent.Peer import Peer
-from PyBitTorrent.TorrentFile import TorrentFile
-from PyBitTorrent.Tracker import Tracker
-from PyBitTorrent.UDPTrackerMessage import Connection, Announce, AnnounceResult
-from PyBitTorrent.Configuration import CONFIGURATION
+from torrentclient.torrentclient.Peer import Peer
+from torrentclient.torrentclient.Tracker import Tracker
+from torrentclient.torrentclient.UDPTrackerMessage import Connection, Announce, AnnounceResult
+from torrentclient.torrentclient.Configuration import CONFIGURATION
 
 
 class UDPTracker(Tracker):
 
-    def get_peers(self, peer_id: bytes, port: int, torrent: TorrentFile) -> List[Peer]:
+    def get_peers(self, peer_id: bytes, port: int, torrent) -> List[Peer]:
         """
         Connect to udp tracker and retrieve from him list of peers. Following the
         BitTorrent UDP Tracker specification, And sourceforge unofficial guide:

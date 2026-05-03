@@ -6,36 +6,36 @@ from typing import List
 
 from rich import progress
 
-from PyBitTorrent import Utils
-from PyBitTorrent.Block import BlockStatus
-from PyBitTorrent.Exceptions import (
-    PieceIsPending,
+from torrentclient.torrentclient import Utils
+from torrentclient.torrentclient.Block import BlockStatus
+from torrentclient.torrentclient.Configuration import CONFIGURATION
+from torrentclient.torrentclient.Exceptions import (
+    AllPeersChocked,
     NoPeersHavePiece,
     NoPieceFound,
+    NoTrackersFound,
+    OutOfPeers,
     PeerDisconnected,
     PieceIsFull,
-    OutOfPeers,
-    AllPeersChocked,
+    PieceIsPending,
 )
-from PyBitTorrent.Message import (
-    Handshake,
-    KeepAlive,
+from torrentclient.torrentclient.Message import (
     BitField,
-    Unchoke,
-    Request,
-    PieceMessage,
-    HaveMessage,
     Choke,
+    Handshake,
+    HaveMessage,
+    KeepAlive,
+    PieceMessage,
+    Request,
+    Unchoke,
 )
-from PyBitTorrent.PeersManager import PeersManager
-from PyBitTorrent.Piece import Piece, create_pieces
-from PyBitTorrent.PiecesManager import DiskManager
-from PyBitTorrent.TorrentFile import TorrentFile
-from PyBitTorrent.TrackerFactory import TrackerFactory
-from PyBitTorrent.TrackerManager import TrackerManager
-from PyBitTorrent.Utils import generate_peer_id, read_peers_from_input
-from PyBitTorrent.Exceptions import NoTrackersFound
-from PyBitTorrent.Configuration import CONFIGURATION
+from torrentclient.torrentclient.PeersManager import PeersManager
+from torrentclient.torrentclient.Piece import Piece, create_pieces
+from torrentclient.torrentclient.PiecesManager import DiskManager
+from torrentclient.torrentclient.TorrentFile import TorrentFile
+from torrentclient.torrentclient.TrackerFactory import TrackerFactory
+from torrentclient.torrentclient.TrackerManager import TrackerManager
+from torrentclient.torrentclient.Utils import generate_peer_id, read_peers_from_input
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s',

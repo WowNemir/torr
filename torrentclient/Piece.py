@@ -1,7 +1,7 @@
 from typing import List, Union
 
-from PyBitTorrent.Block import Block, BlockStatus, create_blocks
-from PyBitTorrent.Exceptions import PieceIsPending, PieceIsFull
+from torrentclient.torrentclient.Block import Block, BlockStatus, create_blocks
+from torrentclient.torrentclient.Exceptions import PieceIsPending, PieceIsFull
 
 
 class Piece:

@@ -1,11 +1,11 @@
 from typing import List
 from urllib.parse import urlparse
 
-from PyBitTorrent.Exceptions import UnknownTracker
-from PyBitTorrent.HTTPTracker import HTTPTracker
-from PyBitTorrent.Tracker import Tracker
-from PyBitTorrent.UDPTracker import UDPTracker
-from PyBitTorrent.Configuration import CONFIGURATION
+from torrentclient.torrentclient.Exceptions import UnknownTracker
+from torrentclient.torrentclient.HTTPTracker import HTTPTracker
+from torrentclient.torrentclient.Tracker import Tracker
+from torrentclient.torrentclient.UDPTracker import UDPTracker
+from torrentclient.torrentclient.Configuration import CONFIGURATION
 
 
 class TrackerFactory:

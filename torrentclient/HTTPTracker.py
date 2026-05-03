@@ -1,19 +1,19 @@
+import io
 import logging
 from typing import List
 
 import requests
 
-from PyBitTorrent.Peer import Peer
-from PyBitTorrent.TorrentFile import TorrentFile
-from PyBitTorrent.Tracker import Tracker
-from PyBitTorrent.bcoder import bdecode
-from PyBitTorrent.Exceptions import UnexpectedResponse
-from PyBitTorrent.Configuration import CONFIGURATION
+from torrentclient.torrentclient.Peer import Peer
+from torrentclient.torrentclient.Tracker import Tracker
+from torrentclient.torrentclient.bcoder import bdecode
+from torrentclient.torrentclient.Exceptions import UnexpectedResponse
+from torrentclient.torrentclient.Configuration import CONFIGURATION
 
 
 class HTTPTracker(Tracker):
 
-    def get_peers(self, peer_id: bytes, port: int, torrent: TorrentFile) -> List[Peer]:
+    def get_peers(self, peer_id: bytes, port: int, torrent) -> List[Peer]:
         """
         Request from the http tracker all the peers,
         parse them, and then return list containing
@@ -33,7 +33,7 @@ class HTTPTracker(Tracker):
         }
         try:
             raw_response = requests.get(self.url, params=params).content
-            tracker_response = bdecode(raw_response)
+            tracker_response = bdecode(io.BytesIO(raw_response), mode='str')
             logging.getLogger("BitTorrent").info(f"success in scraping {self.url}")
             print(tracker_response)
         except (requests.exceptions.RequestException, TypeError, UnexpectedResponse):

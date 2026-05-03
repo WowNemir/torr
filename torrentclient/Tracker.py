@@ -3,9 +3,8 @@ import struct
 from abc import ABC, abstractmethod
 from typing import List
 
-from PyBitTorrent.Peer import Peer
-from PyBitTorrent.TorrentFile import TorrentFile
-from PyBitTorrent.Configuration import CONFIGURATION
+from torrentclient.torrentclient.Peer import Peer
+from torrentclient.torrentclient.Configuration import CONFIGURATION
 
 
 class Tracker(ABC):
@@ -13,7 +12,7 @@ class Tracker(ABC):
         self.url = url
 
     @abstractmethod
-    def get_peers(self, peer_id: bytes, port: int, torrent: TorrentFile) -> List[Peer]:
+    def get_peers(self, peer_id: bytes, port: int, torrent) -> List[Peer]:
         pass
 
     @staticmethod

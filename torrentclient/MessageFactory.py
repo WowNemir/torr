@@ -1,4 +1,4 @@
-from PyBitTorrent.Message import (
+from torrentclient.torrentclient.Message import (
     MessageCode,
     Message,
     Handshake,

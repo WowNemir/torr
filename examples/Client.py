@@ -1,6 +1,9 @@
+from pathlib import Path
 from argparse import ArgumentParser
+import sys
 
-from PyBitTorrent.Bittorrent import TorrentClient
+sys.path.append(str(object=Path('..').absolute()))
+from torrentclient.torrentclient.Bittorrent import TorrentClient
 
 
 def main():
@@ -18,7 +21,7 @@ def main():
 
     # Create client from the BitTorrent Meta File
     torrent_client = TorrentClient(torrent=args.torrent, max_peers=args.max_peers,
-                                   use_progress_bar=args.use_progress_bar, peers_file=args.peers,
+                                   use_progress_bar=args.use_progress_bar, peers_input=args.peers,
                                    output_dir=args.output_directory)
 
     # Start downloading the file

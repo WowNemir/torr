@@ -2,7 +2,7 @@ import logging
 import random
 import struct
 
-from PyBitTorrent.Configuration import CONFIGURATION
+from torrentclient.torrentclient.Configuration import CONFIGURATION
 
 
 class Connection:
