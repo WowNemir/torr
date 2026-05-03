@@ -1,0 +1,18 @@
+[project]
+name = "torrentclient"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "bitstring>=4.4.0",
+    "certifi>=2026.4.22",
+    "chardet>=7.4.3",
+    "commonmark>=0.9.1",
+    "idna>=3.13",
+    "pygments>=2.20.0",
+    "requests>=2.33.1",
+    "rich>=15.0.0",
+    "typing-extensions>=4.15.0",
+    "urllib3>=2.6.3",
+]

@@ -1,10 +1,10 @@
-# PyBitTorrent
+# torrentclient
 ### A Python package for download torrent files.
 
 ## How to use:
 
 ~~~python
-from PyBitTorrent import TorrentClient
+from torrentclient import TorrentClient
 
 client = TorrentClient('~/Downloads/Big Buck Bunny (1920x1080 h.264).torrent')
 client.start()
@@ -133,7 +133,7 @@ Non-existing options are ignored.
 ## The architecture of the program
 * At first, we retrieve all available peers, using the trackers from the `torrent` file, or from the `peers` file provided.
 * Then, we try to connect each one of them, until the value of `max_peers` achieved. The handshakes happen in a *poll* of threads. each thread contain `MAX_HANDSHAKE_THREADS` of peers to handshake with. the `number_of_polls` calculated according to the length of the given peers divided by the `MAX_HANDSHAKE_THREADS`, so we can cover all the peers. note that this process happens in <mark>parallel to the other 2 threads</mark>. continue to read for more details.
-* Right after launching the handshakes thread polls, we start listening for incomming messages using the `handle_messages` function, that calling the `receive_messages` in the `PeersManager` in his turn. This function will search for readable socket, and then parse the data to one of the `PyBitTorrent.Message` classes. This contains one of the two main threads of the program, that continue until completion of the download. 
+* Right after launching the handshakes thread polls, we start listening for incomming messages using the `handle_messages` function, that calling the `receive_messages` in the `PeersManager` in his turn. This function will search for readable socket, and then parse the data to one of the `torrentclient.Message` classes. This contains one of the two main threads of the program, that continue until completion of the download. 
 * Meanwhile we can start requesting for pieces. we do that by calling the function `piece_requester` in different threads. this function search after connected peer *(unchocked connected peer)* that have the piece index we currently in. **The current strategy for piece picking is what we can call *Asynchronous Chronological***. Means that we start requesting for piece index 0, 1, 2, until the end of the file, but don't stop the program if one of them is not full yet. **Better strategy can be implemented**, like *Rarest-Piece-First*, But i noticed that most of the torrent download process is in front of seeders, so i thought it will be useless right now. But of course in communicating with actual peers (like in a new torrent file that just explode over the internet), smarter strategies can help.
 * After all pieces have been received, if the torrent file contain folders we create them and rewrite them in the correct order. until then, all files are written to temp file.
 ### Charted flow of the program:
