@@ -1,10 +1,10 @@
 import io
-from bcoder import decode, encode
+from torrentclient.bcoder import bdecode, bencode
 import pytest
 
 
 def test_decode_types():
-    assert type(decode(io.BytesIO(b"i0e"))) in [int, str, list, dict]
+    assert type(bdecode(io.BytesIO(b"i0e"))) in [int, str, list, dict]
 
 @pytest.mark.parametrize("raw,expected", [
     ("i0e", 0),
@@ -23,6 +23,6 @@ def test_decode_types():
     ("d1:ade1:blee", {b'a':{}, b'b':[]}),
     ])
 def test_decode_int(raw, expected):
-    assert decode(io.BytesIO(raw.encode())) == expected
+    assert bdecode(io.BytesIO(raw.encode())) == expected
 
-    assert encode(expected) == raw.encode()
+    assert bencode(expected) == raw.encode()
