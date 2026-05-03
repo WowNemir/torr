@@ -41,6 +41,11 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
+logger = logging.getLogger(__name__)
+
+SHORT_RETRY_INTERVAL = 2
+RETRY_INTERVAL = 2.5
+
 
 class TorrentClient:
     def __init__(
@@ -62,7 +67,7 @@ class TorrentClient:
         self.should_continue = True
         self.use_progress_bar = use_progress_bar
         if use_progress_bar:
-            logging.getLogger("BitTorrent").setLevel(CONFIGURATION.logging_level)
+            logger.setLevel(CONFIGURATION.logging_level)
 
         # decode the config file and assign it
         self.torrent = TorrentFile(torrent)
@@ -91,14 +96,14 @@ class TorrentClient:
     def setup(self):
         # Send HTTP/UDP Requests to all Trackers, requesting for peers
         if self.peers_input:
-            logging.getLogger("BitTorrent").info("Reading peers from input")
+            logger.info("Reading peers from input")
             peers = read_peers_from_input(self.peers_input)
         else:
             peers = self.tracker_manager.get_peers(self.id, self.port, self.torrent)
             if len(peers) == 0:
                 raise Exception("No peers found")
 
-        logging.getLogger("BitTorrent").info(f"Number of peers: {len(peers)}")
+        logger.info("Number of peers: %d", len(peers))
 
         self.peer_manager.add_peers(peers)
 
@@ -133,11 +138,11 @@ class TorrentClient:
                 # Utils.console.print.f'[purple]Waiting for message...')
                 messages = self.peer_manager.receive_messages()
             except OutOfPeers:
-                logging.getLogger("BitTorrent").error("No peers found, sleep for 2 seconds")
-                time.sleep(2)
+                logger.error("No peers found, sleep for %d seconds", SHORT_RETRY_INTERVAL)
+                time.sleep(SHORT_RETRY_INTERVAL)
                 continue
             except OSError as e:
-                logging.getLogger("BitTorrent").info(f"Unknown socket error: {e}")
+                logger.info("Unknown socket error: %s", e)
                 continue
 
             for peer, message in messages.items():
@@ -145,20 +150,20 @@ class TorrentClient:
                     peer.verify_handshake(message)
 
                 elif type(message) is BitField:
-                    logging.getLogger("BitTorrent").info(f"Got bitfield from {peer}")
+                    logger.info("Got bitfield from %s", peer)
                     peer.set_bitfield(message)
 
                 elif type(message) is HaveMessage:
                     peer.set_have(message)
 
                 elif type(message) is KeepAlive:
-                    logging.getLogger("BitTorrent").debug(f"Got keep alive from {peer}")
+                    logger.debug("Got keep alive from %s", peer)
 
                 elif type(message) is Choke:
                     peer.set_choked()
 
                 elif type(message) is Unchoke:
-                    logging.getLogger("BitTorrent").debug(f"Received unchoke from {peer}")
+                    logger.debug("Received unchoke from %s", peer)
                     peer.set_unchoked()
 
                 elif type(message) is PieceMessage:
@@ -167,7 +172,7 @@ class TorrentClient:
                         return
 
                 else:
-                    logging.getLogger("BitTorrent").error(f"Unknown message: {message.id}")  # should be error
+                    logger.error("Unknown message: %s", message.id)  # should be error
 
     def piece_requester(self):
         """
@@ -181,7 +186,7 @@ class TorrentClient:
             self.request_current_block()
             time.sleep(CONFIGURATION.iteration_sleep_interval)
 
-        logging.getLogger("BitTorrent").info("Exiting the requesting loop...")
+        logger.info("Exiting the requesting loop...")
         self.piece_manager.close()
 
     def request_current_block(self):
@@ -201,17 +206,15 @@ class TorrentClient:
                 continue
 
             except NoPeersHavePiece:
-                logging.getLogger("BitTorrent").debug(f"No peers have piece {piece.index}")
-                time.sleep(2.5)
+                logger.debug("No peers have piece %d", piece.index)
+                time.sleep(RETRY_INTERVAL)
 
             except AllPeersChocked:
-                logging.getLogger("BitTorrent").debug(
-                    f"All of " f"{len(self.peer_manager.connected_peers)} peers is chocked"
-                )
-                time.sleep(2.5)
+                logger.debug("All of %d peers is chocked", len(self.peer_manager.connected_peers))
+                time.sleep(RETRY_INTERVAL)
 
             except PeerDisconnected:
-                logging.getLogger("BitTorrent").error(f"Peer {peer} disconnected when requesting for piece")
+                logger.error("Peer %s disconnected when requesting for piece", peer)
                 self.peer_manager.remove_peer(peer)
 
         if self._all_pieces_full():
@@ -232,7 +235,7 @@ class TorrentClient:
     def handle_piece(self, pieceMessage: PieceMessage):
         try:
             if not len(pieceMessage.data):
-                logging.getLogger("BitTorrent").debug("Empty piece:", pieceMessage.index)
+                logger.debug("Empty piece: %d", pieceMessage.index)
                 return
 
             piece = self._get_piece_by_index(pieceMessage.index)
@@ -246,14 +249,18 @@ class TorrentClient:
                 self.piece_manager.write_piece(piece, self.torrent.piece_size)
                 self.pieces.remove(piece)
                 if not self.use_progress_bar:
-                    logging.getLogger("BitTorrent").info(
-                        f"Progress: {self.piece_manager.written}/{self.number_of_pieces} Unchoked peers: {self.peer_manager.num_of_unchoked}/{len(self.peer_manager.connected_peers)}"
+                    logger.info(
+                        "Progress: %d/%d Unchoked peers: %d/%d",
+                        self.piece_manager.written,
+                        self.number_of_pieces,
+                        self.peer_manager.num_of_unchoked,
+                        len(self.peer_manager.connected_peers),
                     )
 
                 del piece
                 return True
 
         except PieceIsPending:
-            logging.getLogger("BitTorrent").debug(f"Piece {pieceMessage.index} is pending")
+            logger.debug("Piece %d is pending", pieceMessage.index)
 
         return False
