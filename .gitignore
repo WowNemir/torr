@@ -1,11 +1,3 @@
-__pycache_/
-.idea/
-.idea/workspace.xml
 __pycache__/
 *.pyc
-*.bin
-*.written
-*.copy
-*.tmp
-torrentclient.egg-info/
-dist/
+.coverage
