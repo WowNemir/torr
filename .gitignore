@@ -7,5 +7,5 @@ __pycache__/
 *.written
 *.copy
 *.tmp
-PyBitTorrent.egg-info/
+torrentclient.egg-info/
 dist/
