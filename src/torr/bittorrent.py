@@ -27,8 +27,7 @@ from torr.message import (
 from torr.peer import PeersManager
 from torr.piece import DiskManager, Piece, create_pieces
 from torr.torrent_file import TorrentFile
-from torr.tracker import TrackerManager
-from torr.tracker_factory import TrackerFactory
+from torr.tracker import TrackerFactory, TrackerManager
 from torr.utils import console, generate_peer_id, read_peers_from_input
 
 logging.basicConfig(
