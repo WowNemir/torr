@@ -13,16 +13,14 @@ class Decoder:
     def read_bytes(self, n: int) -> bytes:
         res = self.content[self.position : self.position + n]
         self.position += n
+
         return res
 
     def read_until(self, end: bytes) -> bytes:
         end_ind = self.content.find(end, self.position)
-
-        if end_ind == -1:
-            raise ValueError("Delimiter not found")
-
         res = self.content[self.position : end_ind]
         self.position = end_ind + len(end)
+
         return res
 
     def decode_items(self, mode: Literal["str", "bytes"] = "bytes") -> Generator[BEncoded]:
@@ -68,6 +66,7 @@ def bencode(obj) -> bytes:
         return bencode(obj.encode())
     elif isinstance(obj, list):
         encoded_items = [bencode(item) for item in obj]
+
         return b"l" + b"".join(encoded_items) + b"e"
     elif isinstance(obj, dict):
         encoded_key_values = []
@@ -76,5 +75,5 @@ def bencode(obj) -> bytes:
             encoded_key_values.append(bencode(value))
 
         return b"d" + b"".join(encoded_key_values) + b"e"
-    else:
-        return b""
+
+    raise ValueError(f"Unsupported type for bencoding: {type(obj).__name__}")

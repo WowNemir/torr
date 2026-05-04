@@ -48,7 +48,12 @@ root = ["."]
 dev = [
     "pre-commit>=4.6.0",
     "pytest>=9.0.3",
+    "pytest-cov>=7.1.0",
 ]
+
+[tool.pytest.ini_options]
+addopts = "--cov=torr --cov-report=term-missing"
+testpaths = ["tests"]
 
 [project.scripts]
 torr = "torr.cli:main"
