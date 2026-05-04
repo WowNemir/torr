@@ -16,8 +16,7 @@ from torr.exceptions import (
     PeerConnectionFailed,
     PeerDisconnected,
 )
-from torr.message import BitField, Handshake, HaveMessage, Message, MessageTypes
-from torr.message_factory import MessageFactory
+from torr.message import BitField, Handshake, HaveMessage, Message, MessageFactory, MessageTypes
 
 
 class Peer:
