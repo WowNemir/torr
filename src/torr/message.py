@@ -141,6 +141,10 @@ class PieceMessage(Message):
         return f"[index: {self.index}, offset: {self.offset}]"
 
     @staticmethod
+    def to_bytes(self):
+        pass
+
+    @staticmethod
     def from_bytes(payload):
         index, offset = struct.unpack(">II", payload[:8])
         data = payload[8:]
