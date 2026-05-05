@@ -66,23 +66,11 @@ class Piece:
 
 
 def create_pieces(file_size, piece_size) -> list[Piece]:
-    """
-    Create list of empty pieces for the given
-    file_size and the given piece_size
-    """
     pieces: list[Piece] = []
-    pieces_amount = int(file_size / piece_size)
 
-    # Generate pieces
-    for i in range(pieces_amount):
-        piece = Piece(i, piece_size)
-        pieces.append(piece)
-
-    last_piece_size = file_size % piece_size
-
-    if last_piece_size:
-        last_piece = Piece(pieces_amount, last_piece_size)
-        pieces.append(last_piece)
+    for i, start in enumerate(range(0, file_size, piece_size)):
+        end = min(start + piece_size, file_size)
+        pieces.append(Piece(i, end - start))
 
     return pieces
 
