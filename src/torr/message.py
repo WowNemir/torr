@@ -24,19 +24,12 @@ class MessageCode(enum.IntEnum):
 class Message(ABC):
     @abstractmethod
     def to_bytes(self) -> bytes:
-        pass
+        raise NotImplementedError
 
     @classmethod
     @abstractmethod
     def from_bytes(cls, payload: bytes) -> Self:
-        pass
-
-    def should_wait_for_data(self) -> bool:
-        """
-        If the message has a data field,
-        check if should wait until it's full
-        """
-        return False
+        raise NotImplementedError
 
 
 class Choke(Message):
@@ -147,9 +140,6 @@ class PieceMessage(Message):
         data = payload[8:]
 
         return cls(index, offset, data)
-
-    def should_wait_for_data(self):
-        return len(self.data) == 0
 
 
 class HaveMessage(Message):

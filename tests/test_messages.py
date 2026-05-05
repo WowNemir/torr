@@ -7,6 +7,7 @@ from torr.message import (
     Handshake,
     HaveMessage,
     KeepAlive,
+    Message,
     MessageFactory,
     PieceMessage,
     Request,
@@ -39,18 +40,6 @@ def test_request_to_bytes_and_back(index, offset, length):
     assert parsed.index == index
     assert parsed.begin == offset
     assert parsed.piece_length == length
-
-
-@pytest.mark.parametrize(
-    "data, should_wait",
-    [
-        (b"", True),
-        (b"abc", False),
-    ],
-)
-def test_piece_should_wait_for_data(data, should_wait):
-    msg = PieceMessage(index=1, offset=0, data=data)
-    assert msg.should_wait_for_data() is should_wait
 
 
 def test_piece_from_bytes():
@@ -101,3 +90,15 @@ def test_message_factory():
     assert msg.index == 1
     assert msg.offset == 2
     assert msg.data == b"abc"
+
+
+def test_abstract_class():
+    with pytest.raises(TypeError):
+        Message()
+
+    class A(Message): ...
+
+    with pytest.raises(NotImplementedError):
+        A.from_bytes(b"")
+    with pytest.raises(NotImplementedError):
+        A.to_bytes(object())
