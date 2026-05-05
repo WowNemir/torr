@@ -1,6 +1,5 @@
 import ipaddress
 import logging
-import math
 import random
 import select
 import socket
@@ -11,8 +10,6 @@ from bitstring import BitArray
 
 from torr.configuration import CONFIGURATION
 from torr.exceptions import (
-    AllPeersChocked,
-    NoPeersHavePiece,
     PeerConnectionFailed,
     PeerDisconnected,
 )
@@ -21,7 +18,7 @@ from torr.message import BitField, Handshake, HaveMessage, Message, MessageFacto
 
 class Peer:
     def __init__(self, ip: str, port: int, _id: str = "00000000000000000000"):
-        self.ip = ip
+        self.ip = ipaddress.ip_address(ip)
         self.port = port
         self.id = _id
         self.connected = False  # only after handshake this will be true
@@ -29,10 +26,9 @@ class Peer:
         self.is_choked = True  # By default the client is choked
         self.bitfield: BitArray = BitArray()
 
-        if type(ipaddress.ip_address(ip)) is ipaddress.IPv6Address:
-            self.socket = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-        else:
-            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket = socket.socket(
+            family=socket.AF_INET if self.ip.version == 4 else socket.AF_INET6, type=socket.SOCK_STREAM
+        )
 
         self.socket.settimeout(CONFIGURATION.timeout)
 
@@ -44,7 +40,7 @@ class Peer:
         Connect to the target client
         """
         try:
-            self.socket.connect((self.ip, self.port))
+            self.socket.connect((str(self.ip), self.port))
         except OSError as e:
             raise PeerConnectionFailed(f"Failed to connect: {str(e)}") from e
 
@@ -258,7 +254,7 @@ class PeersManager:
 
         return peers_to_message
 
-    def get_random_peer_by_piece(self, piece):
+    def get_random_peer_by_piece(self, piece) -> Peer | None:
         """
         Get random peer having the given piece
         Will check at the beginning if all peers are choked,
@@ -268,9 +264,10 @@ class PeersManager:
         peers_have_piece = []
 
         # Check if all the peers choked
-        all_is_chocked = math.prod([peer.is_choked for peer in self.connected_peers])
-        if all_is_chocked:
-            raise AllPeersChocked  # If they are, then even if they have the piece it's not relevant
+        if all(peer.is_choked for peer in self.connected_peers):
+            # If they are, then even if they have the piece it's not relevant
+            logging.getLogger("BitTorrent").debug("All of %d peers is chocked", len(self.connected_peers))
+            return None
 
         # Check from all the peers who have the piece
         for peer in self.connected_peers:
@@ -282,7 +279,8 @@ class PeersManager:
             return random.choice(peers_have_piece)
 
         # If we reached so far... then no peer founded
-        raise NoPeersHavePiece
+        logging.getLogger("BitTorrent").debug("No peers have piece %d", piece.index)
+        return None
 
     @property
     def num_of_unchoked(self):

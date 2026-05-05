@@ -4,7 +4,6 @@ import tempfile
 from pathlib import Path
 
 from torr.block import Block, BlockStatus, create_blocks
-from torr.exceptions import PieceIsFull, PieceIsPending
 
 
 class Piece:
@@ -28,21 +27,12 @@ class Piece:
         return True
 
     def get_free_block(self) -> Block | None:
-        """
-        Iterate over the blocks and
-        check if of them is free
-        """
         for block in self.blocks:
             block.calculate_status()
             if block.status == BlockStatus.FREE:
                 return block
 
-        if self.is_full():
-            raise PieceIsFull
-        else:
-            raise PieceIsPending
-
-    def get_block_by_offset(self, offset):
+    def get_block_by_offset(self, offset) -> Block | None:
         """
         Iterate over the blocks and check if
         one of them match the given offset
@@ -50,8 +40,6 @@ class Piece:
         for block in self.blocks:
             if block.offset == offset:
                 return block
-
-        raise PieceIsPending
 
     def get_data(self):
         """

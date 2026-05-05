@@ -5,14 +5,10 @@ from threading import Thread
 
 from rich import progress
 
-from torr.block import BlockStatus
+from torr.block import Block, BlockStatus
 from torr.configuration import CONFIGURATION
 from torr.exceptions import (
-    AllPeersChocked,
-    NoPeersHavePiece,
     PeerDisconnected,
-    PieceIsFull,
-    PieceIsPending,
 )
 from torr.message import (
     BitField,
@@ -169,35 +165,26 @@ class TorrentClient:
         """
 
         while self.should_continue:
-            self.request_current_block()
+            self.request_unfinished_block()
             time.sleep(CONFIGURATION.iteration_sleep_interval)
 
         logger.info("Exiting the requesting loop...")
         self.piece_manager.close()
 
-    def request_current_block(self):
+    def request_unfinished_block(self) -> Block | None:
         for piece in self.pieces:
             try:
                 block = piece.get_free_block()
+                if block is None:
+                    continue
                 peer = self.peer_manager.get_random_peer_by_piece(piece)
+                if peer is None:
+                    time.sleep(RETRY_INTERVAL)
+                    continue
                 request = Request(piece.index, block.offset, block.size)
                 peer.send_message(request)
                 block.set_requested()
-                return
-
-            except PieceIsPending:
-                continue
-
-            except PieceIsFull:
-                continue
-
-            except NoPeersHavePiece:
-                logger.debug("No peers have piece %d", piece.index)
-                time.sleep(RETRY_INTERVAL)
-
-            except AllPeersChocked:
-                logger.debug("All of %d peers is chocked", len(self.peer_manager.connected_peers))
-                time.sleep(RETRY_INTERVAL)
+                return block
 
             except PeerDisconnected:
                 logger.error("Peer %s disconnected when requesting for piece", peer)
@@ -213,40 +200,43 @@ class TorrentClient:
 
         return True
 
-    def _get_piece_by_index(self, index):
+    def _get_piece_by_index(self, index) -> Piece | None:
         for piece in self.pieces:
             if piece.index == index:
                 return piece
 
     def handle_piece(self, pieceMessage: PieceMessage):
-        try:
-            if not len(pieceMessage.data):
-                logger.debug("Empty piece: %d", pieceMessage.index)
-                return
+        if not len(pieceMessage.data):
+            logger.debug("Empty piece: %d", pieceMessage.index)
+            return False
 
-            piece = self._get_piece_by_index(pieceMessage.index)
-            if piece is None:
-                return
-            block = piece.get_block_by_offset(pieceMessage.offset)
-            block.data = pieceMessage.data
-            block.status = BlockStatus.FULL
+        piece = self._get_piece_by_index(pieceMessage.index)
+        if piece is None:
+            return False
+        block = piece.get_block_by_offset(pieceMessage.offset)
+        if block is None:
+            # TODO Here should be a reson why block is None in other case we risk to get infinite loop
+            logger.debug(
+                "Unexpected block: piece=%d offset=%d",
+                pieceMessage.index,
+                pieceMessage.offset,
+            )
+            return False
+        block.data = pieceMessage.data
+        block.status = BlockStatus.FULL
 
-            if piece.is_full():
-                self.piece_manager.write_piece(piece, self.torrent.piece_size)
-                self.pieces.remove(piece)
-                if not self.use_progress_bar:
-                    logger.info(
-                        "Progress: %d/%d Unchoked peers: %d/%d",
-                        self.piece_manager.written,
-                        self.number_of_pieces,
-                        self.peer_manager.num_of_unchoked,
-                        len(self.peer_manager.connected_peers),
-                    )
+        if piece.is_full():
+            self.piece_manager.write_piece(piece, self.torrent.piece_size)
+            self.pieces.remove(piece)
+            if not self.use_progress_bar:
+                logger.info(
+                    "Progress: %d/%d Unchoked peers: %d/%d",
+                    self.piece_manager.written,
+                    self.number_of_pieces,
+                    self.peer_manager.num_of_unchoked,
+                    len(self.peer_manager.connected_peers),
+                )
 
-                del piece
-                return True
-
-        except PieceIsPending:
-            logger.debug("Piece %d is pending", pieceMessage.index)
-
+            del piece
+            return True
         return False
