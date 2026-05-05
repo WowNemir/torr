@@ -16,7 +16,6 @@ class Configuration:
         self.handshake_stripped_size: int = 48
         self.default_connection_id: int = 0x41727101980
         self.compact_value_num_bytes: int = 6
-        self.tcp_only: bool = False
 
     def load(self):
         with open(self.path) as f:

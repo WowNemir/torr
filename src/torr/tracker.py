@@ -219,7 +219,7 @@ class UDPTracker(Tracker):
 
 class TrackerFactory:
     @staticmethod
-    def create_tracker(url: str):
+    def create_tracker(url: str) -> Tracker:
         """
         Check the scheme of the url,
         and decide which type of tracker to create.
@@ -230,8 +230,7 @@ class TrackerFactory:
         if "http" in parsed.scheme.lower():
             return HTTPTracker(url)
         elif "udp" in parsed.scheme.lower():
-            if not CONFIGURATION.tcp_only:
-                return UDPTracker(url)
+            return UDPTracker(url)
         else:
             raise NotImplementedError("Unsupported protocol")
 

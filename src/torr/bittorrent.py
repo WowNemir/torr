@@ -28,7 +28,7 @@ from torr.peer import PeersManager
 from torr.piece import DiskManager, Piece, create_pieces
 from torr.torrent_file import TorrentFile
 from torr.tracker import Tracker, TrackerFactory
-from torr.utils import console, generate_peer_id, read_peers_from_input
+from torr.utils import console, generate_peer_id
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -48,7 +48,6 @@ class TorrentClient:
         torrent: str,
         max_peers: int = CONFIGURATION.max_peers,
         use_progress_bar: bool = True,
-        peers_input: str | None = None,
         output_dir: str = ".",
     ):
         self.peer_manager: PeersManager = PeersManager(max_peers)
@@ -56,7 +55,6 @@ class TorrentClient:
         self.listener_socket: socket.socket = socket.socket()
         self.listener_socket.settimeout(CONFIGURATION.timeout)
         self.port: int = CONFIGURATION.listening_port
-        self.peers_input: str | None = peers_input
         self.pieces: list[Piece] = []
         self.should_continue = True
         self.use_progress_bar = use_progress_bar
@@ -76,29 +74,21 @@ class TorrentClient:
             new_trackers = TrackerFactory.create_trackers(self.torrent.config["announce-list"])
             trackers += new_trackers
 
-        while None in trackers:
-            trackers.remove(None)
-
         if len(trackers) == 0:
             raise ValueError("No trackers found")
 
         self.trackers: list[Tracker] = trackers
-        file_size, piece_size = self.torrent.length, self.torrent.piece_size
-        self.pieces = create_pieces(file_size, piece_size)
+        self.pieces = create_pieces(self.torrent.length, self.torrent.piece_size)
         self.number_of_pieces = len(self.pieces)
 
     def setup(self):
         # Send HTTP/UDP Requests to all Trackers, requesting for peers
-        if self.peers_input:
-            logger.info("Reading peers from input")
-            peers = read_peers_from_input(self.peers_input)
-        else:
-            peers = []
-            for tracker in self.trackers:
-                tracker_peers = tracker.get_peers(self.id, self.port, self.torrent)
-                peers += tracker_peers
-            if len(peers) == 0:
-                raise Exception("No peers found")
+        peers = []
+        for tracker in self.trackers:
+            tracker_peers = tracker.get_peers(self.id, self.port, self.torrent)
+            peers += tracker_peers
+        if len(peers) == 0:
+            raise Exception("No peers found")
 
         logger.info("Number of peers: %d", len(peers))
 
