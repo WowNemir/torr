@@ -27,7 +27,7 @@ class Message(ABC):
 
     @staticmethod
     @abstractmethod
-    def from_bytes(payload):
+    def from_bytes(payload) -> "Message":
         pass
 
     def should_wait_for_data(self):
@@ -101,10 +101,9 @@ class Handshake(Message):
         return handshake
 
     @staticmethod
-    def from_bytes(payload: bytes):
+    def from_bytes(payload: bytes) -> "Handshake":
         if len(payload) != 68:
-            print("Payload error:", payload)
-            return b""
+            raise ValueError(f"Payload error: {payload}")
         protocol_len = struct.unpack(">B", payload[:1])[0]
         protocol, reserved, info_hash, peer_id = struct.unpack(f">{protocol_len}s8s20s20s", payload[1:])
 
