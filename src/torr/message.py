@@ -1,6 +1,7 @@
 import enum
 import struct
 from abc import ABC, abstractmethod
+from typing import Self
 
 from bitstring import BitArray
 
@@ -25,14 +26,14 @@ class Message(ABC):
     def to_bytes(self) -> bytes:
         pass
 
-    @staticmethod
+    @classmethod
     @abstractmethod
-    def from_bytes(payload) -> "Message":
+    def from_bytes(cls, payload: bytes) -> Self:
         pass
 
-    def should_wait_for_data(self):
+    def should_wait_for_data(self) -> bool:
         """
-        If the message have data field,
+        If the message has a data field,
         check if should wait until it's full
         """
         return False
@@ -46,10 +47,9 @@ class Choke(Message):
     def to_bytes(self) -> bytes:
         return struct.pack(">IB", self.length, self.id)
 
-    @staticmethod
-    def from_bytes(payload):
-        # The choke message contains no relevant values...
-        return Unchoke()
+    @classmethod
+    def from_bytes(cls, payload):
+        return cls()
 
 
 class Unchoke(Message):
@@ -60,21 +60,20 @@ class Unchoke(Message):
     def to_bytes(self) -> bytes:
         return struct.pack(">IB", self.length, self.id)
 
-    @staticmethod
-    def from_bytes(payload):
+    @classmethod
+    def from_bytes(cls, payload):
         # The unchoke message contains no relevant values...
-        return Unchoke()
+        return cls()
 
 
 class BitField(Message):
     def __init__(self, bitfield):
         self.bitfield = BitArray(bitfield)
 
-    @staticmethod
-    def from_bytes(payload):
+    @classmethod
+    def from_bytes(cls, payload):
         # payload is the bitstring
-        bitfield = BitArray(payload)
-        return BitField(bitfield)
+        return cls(BitArray(payload))
 
     def to_bytes(self) -> bytes:
         raise NotImplementedError
@@ -100,8 +99,8 @@ class Handshake(Message):
 
         return handshake
 
-    @staticmethod
-    def from_bytes(payload: bytes) -> "Handshake":
+    @classmethod
+    def from_bytes(cls, payload: bytes) -> "Handshake":
         if len(payload) != 68:
             raise ValueError(f"Payload error: {payload}")
         protocol_len = struct.unpack(">B", payload[:1])[0]
@@ -124,10 +123,10 @@ class Request(Message):
     def to_bytes(self) -> bytes:
         return struct.pack(">IBIII", self.length, self.id, self.index, self.begin, self.piece_length)
 
-    @staticmethod
-    def from_bytes(payload):
+    @classmethod
+    def from_bytes(cls, payload):
         _, _, index, begin, length = struct.unpack(">IBIII", payload)
-        return Request(index, begin, length)
+        return cls(index, begin, length)
 
 
 class PieceMessage(Message):
@@ -139,16 +138,15 @@ class PieceMessage(Message):
     def __str__(self):
         return f"[index: {self.index}, offset: {self.offset}]"
 
-    @staticmethod
     def to_bytes(self):
         pass
 
-    @staticmethod
-    def from_bytes(payload):
+    @classmethod
+    def from_bytes(cls, payload):
         index, offset = struct.unpack(">II", payload[:8])
         data = payload[8:]
 
-        return PieceMessage(index, offset, data)
+        return cls(index, offset, data)
 
     def should_wait_for_data(self):
         return len(self.data) == 0
@@ -158,14 +156,14 @@ class HaveMessage(Message):
     def __init__(self, index):
         self.index = index
 
-    @staticmethod
-    def from_bytes(payload):
+    @classmethod
+    def from_bytes(cls, payload):
         index = struct.unpack(">I", payload)[0]
 
-        return HaveMessage(index)
+        return cls(index)
 
-    def to_bytes(self) -> bytes:
-        pass
+    def to_bytes(self):
+        return b""
 
 
 class UnknownMessage(Message):
@@ -173,20 +171,20 @@ class UnknownMessage(Message):
         self.id = _id
 
     def to_bytes(self) -> bytes:
-        pass
+        return b""
 
-    @staticmethod
-    def from_bytes(payload):
-        pass
+    @classmethod
+    def from_bytes(cls, payload):
+        return cls(payload)
 
 
 class KeepAlive(Message):
     def to_bytes(self) -> bytes:
         return struct.pack("I", 0)
 
-    @staticmethod
-    def from_bytes(payload):
-        pass
+    @classmethod
+    def from_bytes(cls, payload):
+        return cls()
 
 
 # Used for typing
