@@ -1,4 +1,3 @@
-import io
 import logging
 import random
 import socket
@@ -123,11 +122,6 @@ class AnnounceResult:
 
 class HTTPTracker(Tracker):
     def get_peers(self, peer_id: bytes, port: int, torrent) -> list[Peer]:
-        """
-        Request from the http tracker all the peers,
-        parse them, and then return list containing
-        Peer objects.
-        """
         logging.getLogger("BitTorrent").error(f"Connecting to HTTP Tracker {self.url}")
 
         params = {
@@ -141,8 +135,7 @@ class HTTPTracker(Tracker):
             "timeout": CONFIGURATION.timeout,
         }
         try:
-            raw_response = requests.get(self.url, params=params).content
-            tracker_response = bdecode(io.BytesIO(raw_response), mode="str")
+            tracker_response = bdecode(requests.get(self.url, params=params).read(), mode="str")
             logging.getLogger("BitTorrent").info(f"success in scraping {self.url}")
         except (requests.exceptions.RequestException, TypeError):
             logging.getLogger("BitTorrent").error(f"Failed to scrape {self.url}")
@@ -235,14 +228,14 @@ class TrackerFactory:
             raise NotImplementedError("Unsupported protocol")
 
     @staticmethod
-    def create_trackers(urls: list[str]) -> list[Tracker]:
+    def create_trackers(urls: list[list[str]]) -> list[Tracker]:
         """
         Create trackers from the given url list.
         Current options are HTTP/UDP.
         """
         trackers = []
         for url in urls:
-            tracker = TrackerFactory.create_tracker(url[0])
+            tracker = TrackerFactory.create_tracker(url[0])  # TODO for some reason it is important to pick first url
             trackers.append(tracker)
 
         return trackers

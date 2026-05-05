@@ -52,9 +52,10 @@ class Peer:
         handshake_bytes = self.handshake.to_bytes()
 
         self.socket.send(handshake_bytes)
-
-        response = self.receive_message()
+        response: Handshake = self.receive_message()
+        assert isinstance(response, Handshake)
         self.verify_handshake(response)
+        self.id = response.peer_id
 
     def verify_handshake(self, message) -> bool:
         if self.handshake == message:
@@ -155,12 +156,6 @@ class PeersManager:
         """
         if peer in self.connected_peers:
             self.connected_peers.remove(peer)
-
-    def add_peer(self, peer: Peer):
-        """
-        Add peer to the list (still not connected)
-        """
-        self.peers.append(peer)
 
     def _send_handshake(self, my_id, info_hash, peer):
         """
