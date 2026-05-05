@@ -27,7 +27,7 @@ from torr.message import (
 from torr.peer import PeersManager
 from torr.piece import DiskManager, Piece, create_pieces
 from torr.torrent_file import TorrentFile
-from torr.tracker import TrackerFactory, TrackerManager
+from torr.tracker import Tracker, TrackerFactory
 from torr.utils import console, generate_peer_id, read_peers_from_input
 
 logging.basicConfig(
@@ -52,7 +52,6 @@ class TorrentClient:
         output_dir: str = ".",
     ):
         self.peer_manager: PeersManager = PeersManager(max_peers)
-        self.tracker_manager: TrackerManager
         self.id: bytes = generate_peer_id()
         self.listener_socket: socket.socket = socket.socket()
         self.listener_socket.settimeout(CONFIGURATION.timeout)
@@ -83,7 +82,7 @@ class TorrentClient:
         if len(trackers) == 0:
             raise ValueError("No trackers found")
 
-        self.tracker_manager = TrackerManager(trackers)
+        self.trackers: list[Tracker] = trackers
         file_size, piece_size = self.torrent.length, self.torrent.piece_size
         self.pieces = create_pieces(file_size, piece_size)
         self.number_of_pieces = len(self.pieces)
@@ -94,7 +93,10 @@ class TorrentClient:
             logger.info("Reading peers from input")
             peers = read_peers_from_input(self.peers_input)
         else:
-            peers = self.tracker_manager.get_peers(self.id, self.port, self.torrent)
+            peers = []
+            for tracker in self.trackers:
+                tracker_peers = tracker.get_peers(self.id, self.port, self.torrent)
+                peers += tracker_peers
             if len(peers) == 0:
                 raise Exception("No peers found")
 

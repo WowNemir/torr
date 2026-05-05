@@ -38,24 +38,6 @@ class Tracker(ABC):
         return peers
 
 
-class TrackerManager:
-    def __init__(self, trackers: list[Tracker]):
-        self.trackers: list[Tracker] = trackers
-
-    def get_peers(self, peer_id: bytes, port: int, torrent_file) -> list[Peer]:
-        """
-        Return list of peers, by calling each tracker 'get_peer' method.
-        This will cause a series of HTTP/UDP requests, in the end each
-        one will return his list of peers.
-        """
-        peers = []
-        for tracker in self.trackers:
-            tracker_peers = tracker.get_peers(peer_id, port, torrent_file)
-            peers += tracker_peers
-
-        return peers
-
-
 class Connection:
     def __init__(self, transaction_id=None, connection_id=CONFIGURATION.default_connection_id, action=0):
         self.transaction_id = transaction_id
