@@ -5,9 +5,7 @@ class Configuration:
     def __init__(self, path: str = "./config.json"):
         self.path: str = path
         self.listening_port: int = 6881
-        self.max_listening_port: int = 6889
         self.max_peers: int = 12
-        self.request_interval: float = 0.2
         self.iteration_sleep_interval: float = 0.001
         self.logging_level: int = 100
         self.timeout: float = 3.0
