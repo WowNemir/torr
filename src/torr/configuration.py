@@ -2,8 +2,8 @@ import json
 
 
 class Configuration:
-    def __init__(self, path: str = "./config.json"):
-        self.path: str = path
+    def __init__(self, path: str | None = None):
+        self.path = path
         self.listening_port: int = 6881
         self.max_peers: int = 12
         self.iteration_sleep_interval: float = 0.001
@@ -16,6 +16,8 @@ class Configuration:
         self.compact_value_num_bytes: int = 6
 
     def load(self):
+        if self.path is None:
+            return
         with open(self.path) as f:
             config = json.load(f)
         for key, value in config.items():
