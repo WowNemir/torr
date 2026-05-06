@@ -1,7 +1,6 @@
 import enum
 import struct
 from abc import ABC, abstractmethod
-from typing import Self
 
 from bitstring import BitArray
 
@@ -28,7 +27,7 @@ class Message(ABC):
 
     @classmethod
     @abstractmethod
-    def from_bytes(cls, payload: bytes) -> Self:
+    def from_bytes(cls, payload: bytes):
         raise NotImplementedError
 
 

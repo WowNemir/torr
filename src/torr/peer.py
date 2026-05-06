@@ -10,7 +10,6 @@ from bitstring import BitArray
 
 from torr.configuration import CONFIGURATION
 from torr.exceptions import (
-    PeerConnectionFailed,
     PeerDisconnected,
 )
 from torr.message import BitField, Handshake, HaveMessage, Message, MessageFactory, MessageTypes
@@ -35,15 +34,6 @@ class Peer:
     def __str__(self):
         return f"{self.id} {self.ip}:{self.port}"
 
-    def connect(self):
-        """
-        Connect to the target client
-        """
-        try:
-            self.socket.connect((str(self.ip), self.port))
-        except OSError as e:
-            raise PeerConnectionFailed(f"Failed to connect: {str(e)}") from e
-
     def do_handshake(self, my_id, info_hash):
         """
         Do handshake with fellow peer
@@ -60,8 +50,8 @@ class Peer:
     def verify_handshake(self, message) -> bool:
         if self.handshake == message:
             self.connected = True
-            return True
-        return False
+
+        return self.connected
 
     def set_bitfield(self, bitfield: BitField):
         self.bitfield = bitfield.bitfield
@@ -157,15 +147,15 @@ class PeersManager:
         if peer in self.connected_peers:
             self.connected_peers.remove(peer)
 
-    def _send_handshake(self, my_id, info_hash, peer):
+    def _send_handshake(self, my_id, info_hash, peer: Peer):
         """
         Send handshake to the given peer.
         NOTE: this function is BLOCKING.
         it waits until handshake response received, and failed otherwise.
         """
         try:
-            peer.connect()
-        except PeerConnectionFailed:
+            peer.socket.connect((str(peer.ip), peer.port))
+        except OSError:
             return
         try:
             # Send the handshake to peer
