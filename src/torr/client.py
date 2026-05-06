@@ -128,33 +128,27 @@ class TorrentClient:
                 continue
 
             for peer, message in messages.items():
-                if type(message) is Handshake:
-                    peer.verify_handshake(message)
-
-                elif type(message) is BitField:
-                    logger.info("Got bitfield from %s", peer)
-                    peer.set_bitfield(message)
-
-                elif type(message) is HaveMessage:
-                    peer.set_have(message)
-
-                elif type(message) is KeepAlive:
-                    logger.debug("Got keep alive from %s", peer)
-
-                elif type(message) is Choke:
-                    peer.set_choked()
-
-                elif type(message) is Unchoke:
-                    logger.debug("Received unchoke from %s", peer)
-                    peer.set_unchoked()
-
-                elif type(message) is PieceMessage:
-                    # "Got piece!", message)
-                    if self.handle_piece(message):
-                        return
-
-                else:
-                    logger.error("Unknown message: %s", message.id)  # should be error
+                match message:
+                    case Handshake():
+                        peer.verify_handshake(message)
+                    case BitField():
+                        logger.info("Got bitfield from %s", peer)
+                        peer.set_bitfield(message)
+                    case HaveMessage():
+                        peer.set_have(message)
+                    case KeepAlive():
+                        logger.debug("Got keep alive from %s", peer)
+                    case Choke():
+                        peer.set_choked()
+                    case Unchoke():
+                        logger.debug("Received unchoke from %s", peer)
+                        peer.set_unchoked()
+                    case PieceMessage():
+                        # "Got piece!", message)
+                        if self.handle_piece(message):
+                            return
+                    case _:
+                        logger.error("Unknown message: %s", message)  # should be error
 
     def piece_requester(self):
         """
