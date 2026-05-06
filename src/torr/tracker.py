@@ -135,10 +135,12 @@ class HTTPTracker(Tracker):
             "timeout": CONFIGURATION.timeout,
         }
         try:
-            tracker_response = bdecode(requests.get(self.url, params=params).read(), mode="str")
+            with requests.get(self.url, params=params, stream=True) as r:
+                r.raw.decode_content = True
+                tracker_response = bdecode(r.raw, mode="str")
             logging.getLogger("BitTorrent").info(f"success in scraping {self.url}")
-        except (requests.exceptions.RequestException, TypeError):
-            logging.getLogger("BitTorrent").error(f"Failed to scrape {self.url}")
+        except (requests.exceptions.RequestException, TypeError, ValueError) as e:
+            logging.getLogger("BitTorrent").error(f"Failed to scrape {self.url}, {e}")
             return []
 
         peers = []
@@ -156,7 +158,7 @@ class HTTPTracker(Tracker):
 
         elif "failure reason" in tracker_response:
             logging.getLogger("BitTorrent").error(
-                f'Failure in tracker {self.url}: {tracker_response["failure reason"]}'
+                f"Failure in tracker {self.url}: {tracker_response['failure reason']}"
             )
         else:
             logging.getLogger("BitTorrent").error(f"Unknown exception in tracker {self.url}")
