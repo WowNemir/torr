@@ -168,7 +168,7 @@ class TorrentClient:
                 return block
 
             except PeerDisconnected:
-                logger.error("Peer %s disconnected when requesting for piece", peer)
+                logger.error("%s disconnected when requesting for piece", peer)
                 self.peer_manager.remove_peer(peer)
 
         if self._all_pieces_full():

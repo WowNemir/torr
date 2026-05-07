@@ -16,10 +16,10 @@ from torr.message import BitField, Handshake, HaveMessage, Message, MessageFacto
 
 
 class Peer:
-    def __init__(self, ip: str, port: int, _id: str = "00000000000000000000"):
+    def __init__(self, ip: str, port: int):
         self.ip = ipaddress.ip_address(ip)
         self.port = port
-        self.id = _id
+        self.id = None
         self.connected = False  # only after handshake this will be true
         self.handshake = None  # Handshake still have not happened
         self.is_choked = True  # By default the client is choked
@@ -31,8 +31,9 @@ class Peer:
 
         self.socket.settimeout(CONFIGURATION.timeout)
 
-    def __str__(self):
-        return f"{self.id} {self.ip}:{self.port}"
+    def __repr__(self):
+        ip_and_port = f"{self.ip}:{self.port}"
+        return f"Peer({self.id or ip_and_port})"
 
     def _handshake(self, my_id, info_hash):
         self.handshake = Handshake(my_id, info_hash)
@@ -69,7 +70,7 @@ class Peer:
             raise PeerDisconnected from e
 
         if packet_length == b"":
-            logging.getLogger("BitTorrent").debug(f"Peer [{self.id}] ({self.ip}) disconnected")
+            logging.getLogger("BitTorrent").debug("%s disconnected", self)
             self.socket.close()
             raise PeerDisconnected
 
@@ -160,9 +161,7 @@ class PeersManager:
             # Consider it as connected client
             self.connected_peers.append(peer)
 
-            logging.getLogger("BitTorrent").debug(
-                f"Adding peer {peer} which is {len(self.connected_peers)}/{self.max_peers}"
-            )
+            logging.getLogger("BitTorrent").debug(f"Adding {peer}: {len(self.connected_peers)}/{self.max_peers}")
 
         except (OSError, PeerDisconnected):
             pass
@@ -227,7 +226,7 @@ class PeersManager:
                 message = peer.receive_message()
                 peers_to_message[peer] = message
             except PeerDisconnected:
-                logging.getLogger("BitTorrent").debug(f"Peer {peer} while waiting for message")
+                logging.getLogger("BitTorrent").debug("%s disconnected while waiting for message", peer)
                 self.remove_peer(peer)
                 return self.receive_messages()
 
