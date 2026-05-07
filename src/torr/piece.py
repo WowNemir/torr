@@ -23,7 +23,6 @@ class Piece:
         for block in self.blocks:
             if block.status != BlockStatus.FULL:
                 return False
-
         return True
 
     def get_free_block(self) -> Block | None:

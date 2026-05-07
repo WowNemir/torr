@@ -19,7 +19,6 @@ def main():
     torrent_client = TorrentClient(
         torrent=args.torrent,
         max_peers=args.max_peers,
-        use_progress_bar=args.use_progress_bar,
         output_dir=args.output_directory,
     )
 

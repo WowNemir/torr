@@ -17,7 +17,6 @@ The TorrentClient accepts the following parameters:
 TorrentClient(
     torrent: str,
     max_peers: int,
-    use_progress_bar: bool,
     output_dir: str,
 )
 ~~~
@@ -26,9 +25,6 @@ TorrentClient(
 * max_peers: max peers should connect. after reaching this value, stop connecting to other peers. Big value will lead to
   more connected peers and therefore faster download speed, but this will make the handshake process slower. The
   default should be good for most uses (`12`)
-* use_progress_bar: should show the progress bar or the logger printing. The first option intended for better look in a
-  terminal, but you should use the other one if you want detailed information about your download process. the default
-  is `False`
 * output_dir: path to the directory the output files should be saved. default is `None`
 
 ## Simple usage:
@@ -47,7 +43,6 @@ optional arguments:
   --torrent TORRENT     Path of the Torrent file
   --output-directory OUTPUT_DIRECTORY
                         Path to the output directory
-  --use-progress-bar    should show progress bar
   --max-peers MAX_PEERS
                         Max connected peers
 ~~~

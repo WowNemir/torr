@@ -3,8 +3,6 @@ import socket
 import time
 from threading import Thread
 
-from rich import progress
-
 from torr.block import Block, BlockStatus
 from torr.configuration import CONFIGURATION
 from torr.exceptions import (
@@ -43,7 +41,6 @@ class TorrentClient:
         self,
         torrent: str,
         max_peers: int = CONFIGURATION.max_peers,
-        use_progress_bar: bool = True,
         output_dir: str = ".",
     ):
         self.peer_manager: PeersManager = PeersManager(max_peers)
@@ -53,9 +50,6 @@ class TorrentClient:
         self.port: int = CONFIGURATION.listening_port
         self.pieces: list[Piece] = []
         self.should_continue = True
-        self.use_progress_bar = use_progress_bar
-        if use_progress_bar:
-            logger.setLevel(CONFIGURATION.logging_level)
 
         # decode the config file and assign it
         self.torrent = TorrentFile(torrent)
@@ -99,21 +93,14 @@ class TorrentClient:
 
         handshakes.start()
         requester.start()
-        self.progress_download()
+        self._download()
         handshakes.join()
         requester.join()
         console.print("[green]GoodBye!")
 
-    def progress_download(self):
-        if self.use_progress_bar:
-            for _ in progress.track(
-                range(len(self.pieces)),
-                description=f"Downloading {self.torrent.file_name}",
-            ):
-                self.handle_messages()
-        else:
-            for _ in range(len(self.pieces)):
-                self.handle_messages()
+    def _download(self):
+        for _ in range(len(self.pieces)):
+            self.handle_messages()
 
     def handle_messages(self):
         while not self._all_pieces_full():
@@ -222,14 +209,13 @@ class TorrentClient:
         if piece.is_full():
             self.piece_manager.write_piece(piece, self.torrent.piece_size)
             self.pieces.remove(piece)
-            if not self.use_progress_bar:
-                logger.info(
-                    "Progress: %d/%d Unchoked peers: %d/%d",
-                    self.piece_manager.written,
-                    self.number_of_pieces,
-                    self.peer_manager.num_of_unchoked,
-                    len(self.peer_manager.connected_peers),
-                )
+            logger.info(
+                "Progress: %d/%d Unchoked peers: %d/%d",
+                self.piece_manager.written,
+                self.number_of_pieces,
+                self.peer_manager.num_of_unchoked,
+                len(self.peer_manager.connected_peers),
+            )
 
             del piece
             return True

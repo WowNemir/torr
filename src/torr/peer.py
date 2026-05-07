@@ -34,10 +34,7 @@ class Peer:
     def __str__(self):
         return f"{self.id} {self.ip}:{self.port}"
 
-    def do_handshake(self, my_id, info_hash):
-        """
-        Do handshake with fellow peer
-        """
+    def _handshake(self, my_id, info_hash):
         self.handshake = Handshake(my_id, info_hash)
         handshake_bytes = self.handshake.to_bytes()
 
@@ -72,7 +69,7 @@ class Peer:
             raise PeerDisconnected from e
 
         if packet_length == b"":
-            logging.getLogger("BitTorrent").debug(f"Client in ip {self.ip} with id {self.id} disconnected")
+            logging.getLogger("BitTorrent").debug(f"Peer [{self.id}] ({self.ip}) disconnected")
             self.socket.close()
             raise PeerDisconnected
 
@@ -118,10 +115,7 @@ class Peer:
         self.is_choked = False
 
     def have_piece(self, piece):
-        if piece.index < self.bitfield.length:
-            return self.bitfield[piece.index]
-        else:
-            return False
+        return piece.index < self.bitfield.length and self.bitfield[piece.index]
 
 
 class PeersManager:
@@ -161,7 +155,7 @@ class PeersManager:
             # Send the handshake to peer
             logging.getLogger("BitTorrent").info(f"Trying handshake with peer {peer.ip}")
 
-            peer.do_handshake(my_id, info_hash)
+            peer._handshake(my_id, info_hash)
 
             # Consider it as connected client
             self.connected_peers.append(peer)
