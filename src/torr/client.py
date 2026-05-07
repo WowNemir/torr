@@ -1,6 +1,9 @@
 import logging
+import random
 import socket
+import string
 import time
+from importlib import metadata
 from threading import Thread
 
 from torr.block import Block, BlockStatus
@@ -17,9 +20,7 @@ from torr.message import (
 )
 from torr.peer import PeersManager
 from torr.piece import DiskManager, Piece, create_pieces
-from torr.torrent_file import TorrentFile
-from torr.tracker import Tracker, TrackerFactory
-from torr.utils import console, generate_peer_id
+from torr.tracker import TorrentFile, Tracker, TrackerFactory
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -31,6 +32,19 @@ logger = logging.getLogger(__name__)
 
 SHORT_RETRY_INTERVAL = 2
 RETRY_INTERVAL = 2.5
+
+
+def generate_peer_id():
+    """
+    Generate random peer id with length of 20 bytes
+    """
+    version = metadata.version(__package__ or "").replace(".", "") + "0"
+
+    id_suffix = "".join([random.choice(string.ascii_letters) for _ in range(12)])
+    peer_id = f"-Tr{version}-{id_suffix}"
+    assert len(peer_id) == 20
+
+    return peer_id.encode()
 
 
 class TorrentClient:
@@ -93,7 +107,7 @@ class TorrentClient:
         self._download()
         handshakes.join()
         requester.join()
-        console.print("[green]GoodBye!")
+        logger.info("GoodBye!")
 
     def _download(self):
         for _ in range(len(self.pieces)):

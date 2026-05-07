@@ -1,6 +1,6 @@
 import re
 
-from torr.utils import generate_peer_id
+from torr.client import generate_peer_id
 
 
 def test_peer_id_is_bytes():

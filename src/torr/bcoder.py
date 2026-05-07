@@ -53,7 +53,7 @@ class Decoder:
                 raise ValueError(f"Unknown token: {head}")
 
 
-def bdecode(file: io.BufferedReader, mode: Literal["str", "bytes"] = "bytes"):
+def bdecode(file: io.BufferedReader, mode: Literal["str", "bytes"] = "bytes") -> BEncoded:
     return next(Decoder(file).decode_items(mode))
 
 
