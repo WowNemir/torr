@@ -9,9 +9,6 @@ import threading
 from bitstring import BitArray
 
 from torr.configuration import CONFIGURATION
-from torr.exceptions import (
-    PeerDisconnected,
-)
 from torr.message import BitField, Handshake, HaveMessage, Message, MessageFactory, MessageTypes
 
 
@@ -40,10 +37,13 @@ class Peer:
         handshake_bytes = self.handshake.to_bytes()
 
         self.socket.send(handshake_bytes)
-        response: Handshake = self.receive_message()
+        response: Handshake | None = self.receive_message()
+        if response is None:
+            return False
         assert isinstance(response, Handshake)
         self.verify_handshake(response)
         self.id = response.peer_id
+        return True
 
     def verify_handshake(self, message) -> bool:
         if self.handshake == message:
@@ -60,19 +60,19 @@ class Peer:
         else:
             logging.getLogger("BitTorrent").info(f"Have message {have.index} smaller then {self.bitfield.length}")
 
-    def receive_message(self) -> Message:
+    def receive_message(self) -> Message | None:
         # After handshake
         # myid = random.randint(0, 65536)
         try:
             packet_length = self.socket.recv(1)
 
-        except OSError as e:
-            raise PeerDisconnected from e
+        except OSError:
+            return None
 
         if packet_length == b"":
             logging.getLogger("BitTorrent").debug("%s disconnected", self)
             self.socket.close()
-            raise PeerDisconnected
+            return None
 
         if self.connected:
             packet_length = packet_length + self.socket.recv(3)
@@ -81,10 +81,7 @@ class Peer:
                 packet_length = packet_length + self.socket.recv(odd)
                 logging.getLogger("BitTorrent").error(f"Setting size again in {self}, length: {packet_length}")
 
-            try:
-                length = struct.unpack(">I", packet_length)[0]  # Big endian integer
-            except struct.error as e:
-                raise struct.error from e
+            length = struct.unpack(">I", packet_length)[0]  # Big endian integer
             data = self.socket.recv(length)
 
             while len(data) != length:
@@ -99,15 +96,15 @@ class Peer:
 
             return MessageFactory.create_handshake_message(packet_length + handshake_bytes)
 
-    def send_message(self, message: Message):
+    def send_message(self, message: Message) -> bool:
         # logging.getLogger('BitTorrent').debug(f'Sending message {type(message)} to {self}')
-        if not self.connected:
-            pass
         message_bytes = message.to_bytes()
         try:
             self.socket.send(message_bytes)
-        except OSError as e:
-            raise PeerDisconnected from e
+        except OSError:
+            return False
+        else:
+            return True
 
     def have_piece(self, piece):
         return piece.index < self.bitfield.length and self.bitfield[piece.index]
@@ -150,14 +147,15 @@ class PeersManager:
             # Send the handshake to peer
             logging.getLogger("BitTorrent").info(f"Trying handshake with peer {peer.ip}")
 
-            peer._handshake(my_id, info_hash)
-
+            success = peer._handshake(my_id, info_hash)
+            if success is False:
+                return
             # Consider it as connected client
             self.connected_peers.append(peer)
 
             logging.getLogger("BitTorrent").debug(f"Adding {peer}: {len(self.connected_peers)}/{self.max_peers}")
 
-        except (OSError, PeerDisconnected):
+        except OSError:
             pass
 
     def send_handshakes(self, my_id, info_hash):
@@ -216,13 +214,12 @@ class PeersManager:
 
         # Receive messages from all the given peers
         for peer in peers_to_message:
-            try:
-                message = peer.receive_message()
-                peers_to_message[peer] = message
-            except PeerDisconnected:
+            message = peer.receive_message()
+            if message is None:
                 logging.getLogger("BitTorrent").debug("%s disconnected while waiting for message", peer)
                 self.remove_peer(peer)
                 return self.receive_messages()
+            peers_to_message[peer] = message
 
         return peers_to_message
 

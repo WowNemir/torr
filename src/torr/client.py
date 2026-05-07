@@ -5,9 +5,6 @@ from threading import Thread
 
 from torr.block import Block, BlockStatus
 from torr.configuration import CONFIGURATION
-from torr.exceptions import (
-    PeerDisconnected,
-)
 from torr.message import (
     BitField,
     Choke,
@@ -154,22 +151,21 @@ class TorrentClient:
 
     def request_unfinished_block(self) -> Block | None:
         for piece in self.pieces:
-            try:
-                block = piece.get_free_block()
-                if block is None:
-                    continue
-                peer = self.peer_manager.get_random_peer_by_piece(piece)
-                if peer is None:
-                    time.sleep(RETRY_INTERVAL)
-                    continue
-                request = Request(piece.index, block.offset, block.size)
-                peer.send_message(request)
-                block.set_requested()
-                return block
-
-            except PeerDisconnected:
+            block = piece.get_free_block()
+            if block is None:
+                continue
+            peer = self.peer_manager.get_random_peer_by_piece(piece)
+            if peer is None:
+                time.sleep(RETRY_INTERVAL)
+                continue
+            request = Request(piece.index, block.offset, block.size)
+            success = peer.send_message(request)
+            if success is False:
                 logger.error("%s disconnected when requesting for piece", peer)
                 self.peer_manager.remove_peer(peer)
+                continue
+            block.set_requested()
+            return block
 
         if self._all_pieces_full():
             self.should_continue = False
