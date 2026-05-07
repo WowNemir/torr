@@ -109,12 +109,6 @@ class Peer:
         except OSError as e:
             raise PeerDisconnected from e
 
-    def set_choked(self):
-        self.is_choked = True
-
-    def set_unchoked(self):
-        self.is_choked = False
-
     def have_piece(self, piece):
         return piece.index < self.bitfield.length and self.bitfield[piece.index]
 

@@ -126,10 +126,10 @@ class TorrentClient:
                     case KeepAlive():
                         logger.debug("Got keep alive from %s", peer)
                     case Choke():
-                        peer.set_choked()
+                        peer.is_choked = True
                     case Unchoke():
                         logger.debug("Received unchoke from %s", peer)
-                        peer.set_unchoked()
+                        peer.is_choked = False
                     case PieceMessage():
                         # "Got piece!", message)
                         if self.handle_piece(message):
