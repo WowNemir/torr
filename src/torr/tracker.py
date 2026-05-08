@@ -13,6 +13,8 @@ from torr.bcoder import bdecode, bencode
 from torr.configuration import CONFIGURATION
 from torr.peer import Peer
 
+COMPACT_PEERS_BYTES = 6
+
 
 class Tracker(ABC):
     def __init__(self, url):
@@ -29,10 +31,10 @@ class Tracker(ABC):
         if not peers_bytes:
             return []
 
-        for _ in range(len(peers_bytes) // CONFIGURATION.compact_value_num_bytes):
+        for _ in range(len(peers_bytes) // COMPACT_PEERS_BYTES):
             ip, port = struct.unpack_from("!iH", peers_bytes, offset)
             ip = socket.inet_ntoa(struct.pack("!i", ip))
-            offset += CONFIGURATION.compact_value_num_bytes
+            offset += COMPACT_PEERS_BYTES
 
             peers.append(Peer(ip, port))
 
