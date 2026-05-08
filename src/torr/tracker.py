@@ -10,7 +10,7 @@ from urllib.parse import urlparse
 import requests
 
 from torr.bcoder import bdecode, bencode
-from torr.configuration import CONFIGURATION
+from torr.config import CONFIGURATION
 from torr.peer import Peer
 
 COMPACT_PEERS_BYTES = 6

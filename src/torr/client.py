@@ -6,7 +6,7 @@ import time
 from importlib import metadata
 from threading import Thread
 
-from torr.configuration import CONFIGURATION
+from torr.config import CONFIGURATION
 from torr.message import (
     BitField,
     Choke,

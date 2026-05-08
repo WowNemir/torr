@@ -8,7 +8,7 @@ import threading
 
 from bitstring import BitArray
 
-from torr.configuration import CONFIGURATION
+from torr.config import CONFIGURATION
 from torr.message import BitField, Handshake, HaveMessage, Message, MessageFactory, MessageTypes
 
 
