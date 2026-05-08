@@ -6,7 +6,6 @@ import time
 from importlib import metadata
 from threading import Thread
 
-from torr.block import Block, BlockStatus
 from torr.configuration import CONFIGURATION
 from torr.message import (
     BitField,
@@ -19,7 +18,7 @@ from torr.message import (
     Unchoke,
 )
 from torr.peer import PeersManager
-from torr.piece import DiskManager, Piece, create_pieces
+from torr.piece import Block, BlockStatus, DiskManager, Piece, create_pieces
 from torr.tracker import TorrentFile, Tracker, TrackerFactory
 
 logging.basicConfig(
