@@ -128,7 +128,7 @@ class PieceMessage(Message):
         self.data = data
 
     def __str__(self):
-        return f"[index: {self.index}, offset: {self.offset}]"
+        return f"Piece(index={self.index}, offset={self.offset})"
 
     def to_bytes(self):
         pass

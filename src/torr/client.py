@@ -17,8 +17,9 @@ from torr.message import (
     Request,
     Unchoke,
 )
-from torr.peer import PeersManager
-from torr.piece import Block, BlockStatus, DiskManager, Piece, create_pieces
+from torr.peer import Peer, PeersManager
+from torr.piece import Block, BlockStatus, Piece, create_pieces
+from torr.storage import DiskManager
 from torr.tracker import TorrentFile, Tracker, TrackerFactory
 
 logging.basicConfig(
@@ -60,6 +61,9 @@ class TorrentClient:
         self.port: int = CONFIGURATION.listening_port
         self.pieces: list[Piece] = []
         self.should_continue = True
+        self.max_peers = max_peers
+        self.peers: list[Peer] = []
+        self.connected_peers: list[Peer] = []
 
         # decode the config file and assign it
         self.torrent = TorrentFile(torrent)
