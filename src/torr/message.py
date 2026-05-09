@@ -177,50 +177,42 @@ class KeepAlive(Message):
 
 
 # Used for typing
-MessageTypes = Message | Handshake | Request | PieceMessage | BitField | HaveMessage | Unchoke | Choke | UnknownMessage
+MessageTypes = (
+    Message | Handshake | Request | PieceMessage | BitField | HaveMessage | Unchoke | Choke | UnknownMessage | KeepAlive
+)
 
 
 class MessageFactory:
     @staticmethod
-    def create_message(payload) -> Message:
+    def create_message(payload) -> MessageTypes:
         if len(payload) == 0:
             return KeepAlive()
 
-        _id = payload[0]
-        if _id not in messages_creators:
-            return UnknownMessage(_id)
-
-        return messages_creators[_id](payload[1:])  # Delete the message id byte
-
-    @staticmethod
-    def create_handshake_message(payload):
-        return Handshake.from_bytes(payload)
-
-    @staticmethod
-    def create_bitfield_message(payload):
-        return BitField.from_bytes(payload)
-
-    @staticmethod
-    def create_choke_message(payload):
-        return Choke.from_bytes(payload)
-
-    @staticmethod
-    def create_unchoke_message(payload):
-        return Unchoke.from_bytes(payload)
-
-    @staticmethod
-    def create_piece_message(payload):
-        return PieceMessage.from_bytes(payload)
-
-    @staticmethod
-    def create_have_message(payload):
-        return HaveMessage.from_bytes(payload)
-
-
-messages_creators = {
-    MessageCode.BITFIELD: MessageFactory.create_bitfield_message,
-    MessageCode.CHOKE: MessageFactory.create_choke_message,
-    MessageCode.UNCHOKE: MessageFactory.create_unchoke_message,
-    MessageCode.PIECE: MessageFactory.create_piece_message,
-    MessageCode.HAVE: MessageFactory.create_have_message,
-}
+        id_, payload = payload[0], payload[1:]
+        match id_:
+            case MessageCode.CHOKE:
+                return Choke.from_bytes(payload)
+            case MessageCode.UNCHOKE:
+                return Unchoke.from_bytes(payload)
+            case MessageCode.INTERESTED:
+                return UnknownMessage(id_)  # INTERESTED
+            case MessageCode.NOT_INTERESTED:
+                return UnknownMessage(id_)  # NOT_INTERESTED
+            case MessageCode.HAVE:
+                return HaveMessage.from_bytes(payload)
+            case MessageCode.BITFIELD:
+                return BitField(BitArray(payload))
+            case MessageCode.REQUEST:
+                return Request.from_bytes(payload)
+            case MessageCode.PIECE:
+                index, offset = struct.unpack(">II", payload[:8])
+                data = payload[8:]
+                return PieceMessage(index, offset, data)
+            case MessageCode.CANCEL:
+                return UnknownMessage(id_)  # CANCEL
+            case MessageCode.PORT:
+                return UnknownMessage(id_)  # PORT
+            case MessageCode.HANDSHAKE:
+                return Handshake.from_bytes(payload)
+            case _:
+                return UnknownMessage(id_)

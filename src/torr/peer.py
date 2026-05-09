@@ -94,7 +94,7 @@ class Peer:
             protocol_len: int = struct.unpack(">B", packet_length)[0]
             handshake_bytes = self.socket.recv(protocol_len + CONFIGURATION.handshake_stripped_size)
 
-            return MessageFactory.create_handshake_message(packet_length + handshake_bytes)
+            return Handshake.from_bytes(packet_length + handshake_bytes)
 
     def send_message(self, message: Message) -> bool:
         # logging.getLogger('BitTorrent').debug(f'Sending message {type(message)} to {self}')
