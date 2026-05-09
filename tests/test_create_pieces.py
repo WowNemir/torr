@@ -9,9 +9,14 @@ def test_create_piece():
 
 
 def test_create_pieces():
-    pieces = create_pieces(1000, 10)
+    class MockTorrentFile:
+        def __init__(self, size, piece_size):
+            self.length = size
+            self.piece_size = piece_size
+
+    pieces = create_pieces(MockTorrentFile(1000, 10))
     assert len(pieces) == 100
 
-    pieces = create_pieces(1001, 10)
+    pieces = create_pieces(MockTorrentFile(1001, 10))
     assert len(pieces) == 101
     assert pieces[-1].size == 1

@@ -1,6 +1,8 @@
 import time
 from enum import Enum
 
+from torr.tracker import TorrentFile
+
 
 class BlockStatus(Enum):
     FREE = 1
@@ -101,7 +103,8 @@ class Piece:
         return data
 
 
-def create_pieces(file_size, piece_size) -> list[Piece]:
+def create_pieces(torrent: TorrentFile) -> list[Piece]:
+    file_size, piece_size = torrent.length, torrent.piece_size
     pieces: list[Piece] = []
 
     for i, start in enumerate(range(0, file_size, piece_size)):

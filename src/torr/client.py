@@ -1,7 +1,9 @@
 import logging
 import random
+import select
 import socket
 import string
+import threading
 import time
 from importlib import metadata
 from threading import Thread
@@ -13,11 +15,12 @@ from torr.message import (
     Handshake,
     HaveMessage,
     KeepAlive,
+    MessageTypes,
     PieceMessage,
     Request,
     Unchoke,
 )
-from torr.peer import Peer, PeersManager
+from torr.peer import Peer
 from torr.piece import Block, BlockStatus, Piece, create_pieces
 from torr.storage import DiskManager
 from torr.tracker import TorrentFile, Tracker, TrackerFactory
@@ -54,7 +57,6 @@ class TorrentClient:
         max_peers: int = CONFIGURATION.max_peers,
         output_dir: str = ".",
     ):
-        self.peer_manager: PeersManager = PeersManager(max_peers)
         self.id: bytes = generate_peer_id()
         self.listener_socket: socket.socket = socket.socket()
         self.listener_socket.settimeout(CONFIGURATION.timeout)
@@ -82,8 +84,7 @@ class TorrentClient:
             raise ValueError("No trackers found")
 
         self.trackers: list[Tracker] = trackers
-        self.pieces = create_pieces(self.torrent.length, self.torrent.piece_size)
-        self.number_of_pieces = len(self.pieces)
+        self.pieces = create_pieces(self.torrent)
 
     def setup(self):
         # Send HTTP/UDP Requests to all Trackers, requesting for peers
@@ -96,13 +97,13 @@ class TorrentClient:
 
         logger.info("Number of peers: %d", len(peers))
 
-        self.peer_manager.add_peers(peers)
+        self.peers += peers
 
     def start(self):
-        if len(self.peer_manager.peers) == 0:
+        if len(self.peers) == 0:
             self.setup()
 
-        handshakes = Thread(target=self.peer_manager.send_handshakes, args=(self.id, self.torrent.hash))
+        handshakes = Thread(target=self.send_handshakes, args=(self.torrent.hash,))
         requester = Thread(target=self.piece_requester)
 
         handshakes.start()
@@ -118,12 +119,12 @@ class TorrentClient:
 
     def handle_messages(self):
         while not self._all_pieces_full():
-            if len(self.peer_manager.connected_peers) == 0:
+            if len(self.connected_peers) == 0:
                 logger.error("No peers found, sleep for %d seconds", SHORT_RETRY_INTERVAL)
                 time.sleep(SHORT_RETRY_INTERVAL)
                 continue
             try:
-                messages = self.peer_manager.receive_messages()
+                messages = self.receive_messages()
             except OSError as e:
                 logger.info("Unknown socket error: %s", e)
                 continue
@@ -171,7 +172,7 @@ class TorrentClient:
             block = piece.get_free_block()
             if block is None:
                 continue
-            peer = self.peer_manager.get_random_peer_by_piece(piece)
+            peer = self.get_random_peer_by_piece(piece)
             if peer is None:
                 time.sleep(RETRY_INTERVAL)
                 continue
@@ -179,7 +180,7 @@ class TorrentClient:
             success = peer.send_message(request)
             if success is False:
                 logger.error("%s disconnected when requesting for piece", peer)
-                self.peer_manager.remove_peer(peer)
+                self.remove_peer(peer)
                 continue
             block.set_requested()
             return block
@@ -225,11 +226,152 @@ class TorrentClient:
             logger.info(
                 "Progress: %d/%d Unchoked peers: %d/%d",
                 self.piece_manager.written,
-                self.number_of_pieces,
-                self.peer_manager.num_of_unchoked,
-                len(self.peer_manager.connected_peers),
+                len(self.pieces) + self.piece_manager.written,
+                self.num_of_unchoked,
+                len(self.connected_peers),
             )
 
             del piece
             return True
         return False
+
+    def _send_handshake(self, info_hash, peer: Peer):
+        """
+        Send handshake to the given peer.
+        NOTE: this function is BLOCKING.
+        it waits until handshake response received, and failed otherwise.
+        """
+        try:
+            peer.socket.connect((str(peer.ip), peer.port))
+        except OSError:
+            return
+        try:
+            # Send the handshake to peer
+            logging.getLogger("BitTorrent").info(f"Trying handshake with peer {peer.ip}")
+
+            success = peer._handshake(self.id, info_hash)
+            if success is False:
+                return
+            # Consider it as connected client
+            self.connected_peers.append(peer)
+
+            logging.getLogger("BitTorrent").debug(f"Adding {peer}: {len(self.connected_peers)}/{self.max_peers}")
+
+        except OSError:
+            pass
+
+    def send_handshakes(self, info_hash):
+        """
+        Send handshake to all clients by create polls of threads
+        That each one of them sending handshake to a constant number
+        of peers. MAX_HANDSHAKE_THREADS decide the max peers to send
+        handshake in each thread. big value will cause long run time
+        for each thread and less threads, small value will cause for
+        less run time to each thread and bigger number of threads.
+        """
+        # Create handshake thread for each peer
+        handshake_threads = []
+        for peer in self.peers:
+            thread = threading.Thread(target=self._send_handshake, args=(info_hash, peer))
+            handshake_threads.append(thread)
+
+        number_of_polls = int(len(handshake_threads) / CONFIGURATION.max_handshake_threads) + 1
+
+        for i in range(1, number_of_polls + 1):
+            logging.getLogger("BitTorrent").debug(f"Poll number {i}/{number_of_polls}")
+            poll = handshake_threads[: CONFIGURATION.max_handshake_threads]
+
+            # Execute threads
+            for thread in poll:
+                thread.start()
+
+            # Wait for them to finish
+            for thread in poll:
+                thread.join()
+
+            if len(self.connected_peers) >= self.max_peers:
+                logging.getLogger("BitTorrent").info(f"Reached max connected peers of {self.max_peers}")
+                break
+
+            # Slice the handshake threads
+            del handshake_threads[: CONFIGURATION.max_handshake_threads]
+
+        logging.getLogger("BitTorrent").info(f"Total peers connected: {len(self.connected_peers)}")
+
+    @property
+    def num_of_unchoked(self):
+        """
+        Count the number of unchoked peers
+        """
+        count = 0
+        for peer in self.connected_peers:
+            if not peer.is_choked:
+                count += 1
+
+        return count
+
+    def get_random_peer_by_piece(self, piece) -> Peer | None:
+        """
+        Get random peer having the given piece
+        Will check at the beginning if all peers are choked,
+        And choose randomly one of the peers that have the
+        piece (By looking at each peer bitfiled).
+        """
+        peers_have_piece = []
+
+        # Check if all the peers choked
+        if all(peer.is_choked for peer in self.connected_peers):
+            # If they are, then even if they have the piece it's not relevant
+            logging.getLogger("BitTorrent").debug("All of %d peers is chocked", len(self.connected_peers))
+            return None
+
+        # Check from all the peers who have the piece
+        for peer in self.connected_peers:
+            if peer.have_piece(piece) and not peer.is_choked:
+                peers_have_piece.append(peer)
+
+        # If we left with any peers, shuffle from them
+        if peers_have_piece:
+            return random.choice(peers_have_piece)
+
+        # If we reached so far... then no peer founded
+        logging.getLogger("BitTorrent").debug("No peers have piece %d", piece.index)
+        return None
+
+    def remove_peer(self, peer):
+        """
+        Remove peer from the 'connected_peers' list.
+        The reason why twin-like function not exists for the
+        'peers' list resides in the fact we don't really care
+        from this list, while we are very care form the connected_peers
+        list, because we use in the receive_message function later.
+        """
+        if peer in self.connected_peers:
+            self.connected_peers.remove(peer)
+
+    def receive_messages(self) -> dict[Peer, MessageTypes]:
+        """
+        Receive new messages from clients
+        """
+
+        # Check for new readable sockets from the connected peers
+        sockets = [peer.socket for peer in self.connected_peers]  # The bug resides in here...
+        readable, _, _ = select.select(sockets, [], [])
+
+        peers_to_message = {}
+        # Extract peer from given sockets
+        for _peer in self.connected_peers:
+            for should_read in readable:
+                if _peer.socket == should_read:
+                    peers_to_message[_peer] = None
+
+        # Receive messages from all the given peers
+        for peer in peers_to_message:
+            message = peer.receive_message()
+            if message is None:
+                logging.getLogger("BitTorrent").debug("%s disconnected while waiting for message", peer)
+                self.remove_peer(peer)
+                return self.receive_messages()
+            peers_to_message[peer] = message
+
+        return peers_to_message
