@@ -20,10 +20,11 @@ from torr.message import (
     Request,
     Unchoke,
 )
-from torr.peer import Peer
+from torr.peer import Peer, Session
 from torr.piece import Block, BlockStatus, Piece, create_pieces
 from torr.storage import DiskManager
-from torr.tracker import TorrentFile, Tracker, TrackerFactory
+from torr.torrent_file import TorrentFile
+from torr.tracker import Tracker, TrackerFactory
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -65,7 +66,7 @@ class TorrentClient:
         self.should_continue = True
         self.max_peers = max_peers
         self.peers: list[Peer] = []
-        self.connected_peers: list[Peer] = []
+        self.sessions = []
 
         # decode the config file and assign it
         self.torrent = TorrentFile(torrent)
@@ -119,7 +120,7 @@ class TorrentClient:
 
     def handle_messages(self):
         while not self._all_pieces_full():
-            if len(self.connected_peers) == 0:
+            if len(self.sessions) == 0:
                 logger.error("No peers found, sleep for %d seconds", SHORT_RETRY_INTERVAL)
                 time.sleep(SHORT_RETRY_INTERVAL)
                 continue
@@ -129,22 +130,22 @@ class TorrentClient:
                 logger.info("Unknown socket error: %s", e)
                 continue
 
-            for peer, message in messages.items():
+            for session, message in messages.items():
                 match message:
                     case Handshake():
-                        peer.verify_handshake(message)
+                        session.verify_handshake(message)
                     case BitField():
-                        logger.info("Got bitfield from %s", peer)
-                        peer.set_bitfield(message)
+                        logger.info("Got bitfield from %s", session.peer)
+                        session.set_bitfield(message)
                     case HaveMessage():
-                        peer.set_have(message)
+                        session.set_have(message)
                     case KeepAlive():
-                        logger.debug("Got keep alive from %s", peer)
+                        logger.debug("Got keep alive from %s", session.peer)
                     case Choke():
-                        peer.is_choked = True
+                        session.is_choked = True
                     case Unchoke():
-                        logger.debug("Received unchoke from %s", peer)
-                        peer.is_choked = False
+                        logger.debug("Received unchoke from %s", session.peer)
+                        session.is_choked = False
                     case PieceMessage():
                         # "Got piece!", message)
                         if self.handle_piece(message):
@@ -172,15 +173,15 @@ class TorrentClient:
             block = piece.get_free_block()
             if block is None:
                 continue
-            peer = self.get_random_peer_by_piece(piece)
-            if peer is None:
+            session = self.get_random_session_by_piece(piece)
+            if session is None:
                 time.sleep(RETRY_INTERVAL)
                 continue
             request = Request(piece.index, block.offset, block.size)
-            success = peer.send_message(request)
+            success = session.send_message(request)
             if success is False:
-                logger.error("%s disconnected when requesting for piece", peer)
-                self.remove_peer(peer)
+                logger.error("%s disconnected when requesting for piece", session.peer)
+                self.remove_session(session)
                 continue
             block.set_requested()
             return block
@@ -228,7 +229,7 @@ class TorrentClient:
                 self.piece_manager.written,
                 len(self.pieces) + self.piece_manager.written,
                 self.num_of_unchoked,
-                len(self.connected_peers),
+                len(self.sessions),
             )
 
             del piece
@@ -241,21 +242,22 @@ class TorrentClient:
         NOTE: this function is BLOCKING.
         it waits until handshake response received, and failed otherwise.
         """
+        session = Session(self.id, peer, self.torrent)
         try:
-            peer.socket.connect((str(peer.ip), peer.port))
+            session.socket.connect((str(peer.ip), peer.port))
         except OSError:
             return
         try:
             # Send the handshake to peer
             logging.getLogger("BitTorrent").info(f"Trying handshake with peer {peer.ip}")
 
-            success = peer._handshake(self.id, info_hash)
+            success = session._handshake(self.id, info_hash)
             if success is False:
                 return
             # Consider it as connected client
-            self.connected_peers.append(peer)
+            self.sessions.append(session)
 
-            logging.getLogger("BitTorrent").debug(f"Adding {peer}: {len(self.connected_peers)}/{self.max_peers}")
+            logging.getLogger("BitTorrent").debug(f"Adding {peer}: {len(self.sessions)}/{self.max_peers}")
 
         except OSError:
             pass
@@ -289,14 +291,14 @@ class TorrentClient:
             for thread in poll:
                 thread.join()
 
-            if len(self.connected_peers) >= self.max_peers:
+            if len(self.sessions) >= self.max_peers:
                 logging.getLogger("BitTorrent").info(f"Reached max connected peers of {self.max_peers}")
                 break
 
             # Slice the handshake threads
             del handshake_threads[: CONFIGURATION.max_handshake_threads]
 
-        logging.getLogger("BitTorrent").info(f"Total peers connected: {len(self.connected_peers)}")
+        logging.getLogger("BitTorrent").info(f"Total peers connected: {len(self.sessions)}")
 
     @property
     def num_of_unchoked(self):
@@ -304,41 +306,41 @@ class TorrentClient:
         Count the number of unchoked peers
         """
         count = 0
-        for peer in self.connected_peers:
-            if not peer.is_choked:
+        for session in self.sessions:
+            if not session.is_choked:
                 count += 1
 
         return count
 
-    def get_random_peer_by_piece(self, piece) -> Peer | None:
+    def get_random_session_by_piece(self, piece) -> Session | None:
         """
         Get random peer having the given piece
         Will check at the beginning if all peers are choked,
         And choose randomly one of the peers that have the
         piece (By looking at each peer bitfiled).
         """
-        peers_have_piece = []
+        sessions_with_piece = []
 
         # Check if all the peers choked
-        if all(peer.is_choked for peer in self.connected_peers):
+        if all(session.is_choked for session in self.sessions):
             # If they are, then even if they have the piece it's not relevant
-            logging.getLogger("BitTorrent").debug("All of %d peers is chocked", len(self.connected_peers))
+            logging.getLogger("BitTorrent").debug("All of %d peers is chocked", len(self.sessions))
             return None
 
         # Check from all the peers who have the piece
-        for peer in self.connected_peers:
-            if peer.have_piece(piece) and not peer.is_choked:
-                peers_have_piece.append(peer)
+        for session in self.sessions:
+            if session.have_piece(piece) and not session.is_choked:
+                sessions_with_piece.append(session)
 
         # If we left with any peers, shuffle from them
-        if peers_have_piece:
-            return random.choice(peers_have_piece)
+        if sessions_with_piece:
+            return random.choice(sessions_with_piece)
 
         # If we reached so far... then no peer founded
         logging.getLogger("BitTorrent").debug("No peers have piece %d", piece.index)
         return None
 
-    def remove_peer(self, peer):
+    def remove_session(self, session):
         """
         Remove peer from the 'connected_peers' list.
         The reason why twin-like function not exists for the
@@ -346,31 +348,31 @@ class TorrentClient:
         from this list, while we are very care form the connected_peers
         list, because we use in the receive_message function later.
         """
-        if peer in self.connected_peers:
-            self.connected_peers.remove(peer)
+        if session in self.sessions:
+            self.sessions.remove(session)
 
-    def receive_messages(self) -> dict[Peer, MessageTypes]:
+    def receive_messages(self) -> dict[Session, MessageTypes]:
         """
         Receive new messages from clients
         """
 
         # Check for new readable sockets from the connected peers
-        sockets = [peer.socket for peer in self.connected_peers]  # The bug resides in here...
+        sockets = [session.socket for session in self.sessions]  # The bug resides in here...
         readable, _, _ = select.select(sockets, [], [])
 
         peers_to_message = {}
         # Extract peer from given sockets
-        for _peer in self.connected_peers:
+        for session in self.sessions:
             for should_read in readable:
-                if _peer.socket == should_read:
-                    peers_to_message[_peer] = None
+                if session.socket == should_read:
+                    peers_to_message[session] = None
 
         # Receive messages from all the given peers
         for peer in peers_to_message:
             message = peer.receive_message()
             if message is None:
                 logging.getLogger("BitTorrent").debug("%s disconnected while waiting for message", peer)
-                self.remove_peer(peer)
+                self.remove_session(peer)
                 return self.receive_messages()
             peers_to_message[peer] = message
 

@@ -7,27 +7,32 @@ from bitstring import BitArray
 
 from torr.config import CONFIGURATION
 from torr.message import BitField, Handshake, HaveMessage, Message, MessageFactory
+from torr.torrent_file import TorrentFile
 
 
 class Peer:
     def __init__(self, ip: str, port: int):
         self.ip = ipaddress.ip_address(ip)
         self.port = port
-        self.id = None
+
+    def __repr__(self):
+        ip_and_port = f"{self.ip}:{self.port}"
+        return f"Peer({ip_and_port})"
+
+
+class Session:
+    def __init__(self, client_id: bytes, peer: Peer, torrent: TorrentFile):
+        self.client_id = client_id
+        self.peer = peer
         self.connected = False  # only after handshake this will be true
         self.handshake = None  # Handshake still have not happened
         self.is_choked = True  # By default the client is choked
         self.bitfield: BitArray = BitArray()
-
         self.socket = socket.socket(
-            family=socket.AF_INET if self.ip.version == 4 else socket.AF_INET6, type=socket.SOCK_STREAM
+            family=socket.AF_INET if self.peer.ip.version == 4 else socket.AF_INET6, type=socket.SOCK_STREAM
         )
 
         self.socket.settimeout(CONFIGURATION.timeout)
-
-    def __repr__(self):
-        ip_and_port = f"{self.ip}:{self.port}"
-        return f"Peer({self.id or ip_and_port})"
 
     def _handshake(self, my_id, info_hash):
         self.handshake = Handshake(my_id, info_hash)
