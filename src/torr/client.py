@@ -4,11 +4,11 @@ import string
 from importlib import metadata
 from threading import Thread
 
-from torr.piece import Piece, create_pieces
-from torr.storage import DiskManager
-from torr.swarm import Swarm
-from torr.torrent_file import TorrentFile
-from torr.tracker import Tracker, TrackerFactory
+from torr.oop.piece import Piece, create_pieces
+from torr.oop.storage import DiskManager
+from torr.oop.swarm import Swarm
+from torr.oop.torrent_file import TorrentFile
+from torr.oop.tracker import Tracker, TrackerFactory
 
 logging.basicConfig(
     level=logging.DEBUG,

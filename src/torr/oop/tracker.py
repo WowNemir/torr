@@ -11,9 +11,10 @@ import requests
 
 from torr.bcoder import bdecode, bencode
 from torr.config import CONFIGURATION
-from torr.peer import Peer
+from torr.oop.peer import Peer
 
 COMPACT_PEERS_BYTES = 6
+TIMEOUT = 3.0
 
 
 class Tracker(ABC):
@@ -136,7 +137,7 @@ class HTTPTracker(Tracker):
             "port": port,
             "left": torrent.length,
             "event": "started",
-            "timeout": CONFIGURATION.timeout,
+            "timeout": TIMEOUT,
         }
         try:
             with requests.get(self.url, params=params, stream=True) as r:
@@ -188,7 +189,7 @@ class UDPTracker(Tracker):
             sock.sendto(connection_request.to_bytes(), tracker_address)
 
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            sock.settimeout(CONFIGURATION.timeout)
+            sock.settimeout(TIMEOUT)
 
             response = sock.recv(CONFIGURATION.udp_tracker_receive_size)  # Answer should be 16 bytes
 

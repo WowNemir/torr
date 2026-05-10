@@ -1,10 +1,11 @@
+# TODO swarm only manages peers and connections, so only Handshake messages should be relevant here
 import logging
 import random
 import select
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from torr.message import (
+from torr.oop.message import (
     BitField,
     Choke,
     Handshake,
@@ -15,9 +16,9 @@ from torr.message import (
     Request,
     Unchoke,
 )
-from torr.peer import Peer, Session
-from torr.piece import BlockStatus, Piece
-from torr.torrent_file import TorrentFile
+from torr.oop.peer import Peer, Session
+from torr.oop.piece import BlockStatus, Piece
+from torr.oop.torrent_file import TorrentFile
 
 MAX_HANDSHAKE_THREADS = 12
 MAX_PEERS = 12

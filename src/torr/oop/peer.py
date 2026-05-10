@@ -6,7 +6,9 @@ import struct
 from bitstring import BitArray
 
 from torr.config import CONFIGURATION
-from torr.message import BitField, Handshake, HaveMessage, Message, MessageFactory
+from torr.oop.message import BitField, Handshake, HaveMessage, Message, MessageFactory
+
+TIMEOUT = 3.0
 
 
 class Peer:
@@ -33,7 +35,7 @@ class Session:
             family=socket.AF_INET if self.peer.ip.version == 4 else socket.AF_INET6, type=socket.SOCK_STREAM
         )
 
-        self.socket.settimeout(CONFIGURATION.timeout)
+        self.socket.settimeout(TIMEOUT)
 
     def _handshake(self, my_id, info_hash):
         self.handshake = Handshake(my_id, info_hash)

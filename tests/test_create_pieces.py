@@ -1,4 +1,4 @@
-from torr.piece import Piece, create_pieces
+from torr.oop.piece import Piece, create_pieces
 
 
 def test_create_piece():

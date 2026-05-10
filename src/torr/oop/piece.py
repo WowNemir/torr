@@ -1,7 +1,7 @@
 import time
 from enum import Enum
 
-from torr.torrent_file import TorrentFile
+from torr.oop.torrent_file import TorrentFile
 
 
 class BlockStatus(Enum):

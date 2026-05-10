@@ -2,7 +2,7 @@ import struct
 
 import pytest
 
-from torr.message import (
+from torr.oop.message import (
     Choke,
     Handshake,
     HaveMessage,
