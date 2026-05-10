@@ -21,12 +21,13 @@ class Peer:
 
 class Session:
     def __init__(self, client_id: bytes, peer: Peer, info_hash):
+        self.peer_id = b"" * 20
         self.info_hash = info_hash
         self.client_id = client_id
         self.peer = peer
         self.connected = False  # only after handshake this will be true
         self.handshake = None  # Handshake still have not happened
-        self.is_choked = False  # By default the client is choked
+        self.is_choked = True  # By default the client is choked
         self.bitfield: BitArray = BitArray()
         self.socket = socket.socket(
             family=socket.AF_INET if self.peer.ip.version == 4 else socket.AF_INET6, type=socket.SOCK_STREAM
@@ -44,7 +45,7 @@ class Session:
             return False
         assert isinstance(response, Handshake)
         self.verify_handshake(response)
-        self.id = response.peer_id
+        self.peer_id = response.peer_id
         return True
 
     def verify_handshake(self, message) -> bool:

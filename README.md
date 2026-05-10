@@ -36,7 +36,7 @@ torr -h
 
 usage: 
     Script for downloading torrent files
-     [-h] --torrent TORRENT [--peers PEERS] [--output-directory OUTPUT_DIRECTORY] [--use-progress-bar] [--max-peers MAX_PEERS]
+     [-h] --torrent TORRENT [--peers PEERS] [--output-directory OUTPUT_DIRECTORY] [--max-peers MAX_PEERS]
 
 optional arguments:
   -h, --help            show this help message and exit

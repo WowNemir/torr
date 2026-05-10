@@ -7,13 +7,10 @@ def main():
     parser = ArgumentParser(__package__)
     parser.add_argument("--torrent", type=str, help="Path of the Torrent file", required=True)
     parser.add_argument("--output-directory", default=".", type=str, help="Path to the output directory")
-    parser.add_argument("--use-progress-bar", action="store_true", default=False, help="should show progress bar")
-    parser.add_argument("--max-peers", type=int, default=12, help="Max connected peers")
     args = parser.parse_args()
 
     torrent_client = TorrentClient(
         torrent=args.torrent,
-        max_peers=args.max_peers,
         output_dir=args.output_directory,
     )
 

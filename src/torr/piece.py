@@ -82,6 +82,14 @@ class Piece:
             if block.status == BlockStatus.FREE:
                 return block
 
+    def get_free_blocks(self) -> list[Block]:
+        blocks = []
+        for block in self.blocks:
+            block.calculate_status()
+            if block.status == BlockStatus.FREE:
+                blocks.append(block)
+        return blocks
+
     def get_block_by_offset(self, offset) -> Block | None:
         """
         Iterate over the blocks and check if
