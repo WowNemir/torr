@@ -1,7 +1,7 @@
 import time
 from enum import Enum
 
-from torr.tracker import TorrentFile
+from torr.torrent_file import TorrentFile
 
 
 class BlockStatus(Enum):
@@ -66,7 +66,7 @@ class Piece:
     def __str__(self):
         return f"[{self.index}]"
 
-    def is_full(self):
+    def is_full(self) -> bool:
         """
         Iterate over the blocks and
         check if they are all fulls

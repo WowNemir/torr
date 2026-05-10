@@ -4,7 +4,6 @@ from dataclasses import dataclass
 @dataclass
 class Configuration:
     def __init__(self):
-        self.listening_port: int = 6881
         self.max_peers: int = 12
         self.iteration_sleep_interval: float = 0.001
         self.timeout: float = 3.0
